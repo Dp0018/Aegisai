@@ -11,11 +11,7 @@ from app.repositories.document import DocumentRepository
 from app.repositories.audit import AuditLogRepository
 
 class MockEmbeddingFunction(EmbeddingFunction):
-    """Deterministic local mock embedding function for sandboxed testing.
-    
-    Generates a fixed-dimension vector (3072 floats) matching text-embedding-3-large
-    without requiring network requests or model downloads.
-    """
+    """Deterministic local mock embedding function for sandboxed testing."""
     def __init__(self) -> None:
         pass
 
@@ -72,6 +68,102 @@ class RecursiveCharacterTextSplitter:
             
         return chunks
 
+class VectorStoreAdapter:
+    """Unified adapter interface wrapping Pinecone, ChromaDB, and in-memory mock indexing."""
+    mock_store = {}  # Shared class dictionary fallback for mock Pinecone tests
+
+    def __init__(self, provider: str, embedding_function: EmbeddingFunction):
+        self.provider = provider
+        self.embedding_function = embedding_function
+        self.is_mock = False
+
+        if self.provider == "pinecone":
+            if settings.PINECONE_API_KEY and settings.PINECONE_API_KEY != "dummy_pinecone_key":
+                from pinecone import Pinecone
+                self.pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+                self.index = self.pc.Index(settings.PINECONE_INDEX_NAME)
+                self.is_mock = False
+            else:
+                self.is_mock = True
+        else:
+            # Fallback to local ChromaDB
+            os.makedirs(settings.CHROMA_DB_DIR, exist_ok=True)
+            self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
+            self.collection = self.chroma_client.get_or_create_collection(
+                name="documents",
+                embedding_function=self.embedding_function
+            )
+
+    def add_document(self, document_id: uuid.UUID, filename: str, chunks: List[str]) -> None:
+        """Upsert text chunks and metadata to the configured vector store."""
+        embeddings = self.embedding_function(chunks)
+        
+        if self.provider == "pinecone":
+            if not self.is_mock:
+                vectors = [
+                    {
+                        "id": f"{document_id}_{i}",
+                        "values": embeddings[i],
+                        "metadata": {
+                            "document_id": str(document_id),
+                            "chunk_index": i,
+                            "filename": filename,
+                            "text": chunks[i]
+                        }
+                    }
+                    for i in range(len(chunks))
+                ]
+                self.index.upsert(vectors=vectors)
+            else:
+                # In-memory mock storage
+                self.mock_store[str(document_id)] = [
+                    {
+                        "id": f"{document_id}_{i}",
+                        "text": chunks[i],
+                        "metadata": {"filename": filename, "chunk_index": i}
+                    }
+                    for i in range(len(chunks))
+                ]
+        else:
+            # ChromaDB
+            ids = [f"{document_id}_{i}" for i in range(len(chunks))]
+            metadatas = [
+                {
+                    "document_id": str(document_id),
+                    "chunk_index": i,
+                    "filename": filename
+                }
+                for i in range(len(chunks))
+            ]
+            self.collection.add(
+                ids=ids,
+                documents=chunks,
+                metadatas=metadatas
+            )
+
+    def delete_document(self, document_id: uuid.UUID) -> None:
+        """Remove document vectors from the configured vector store."""
+        if self.provider == "pinecone":
+            if not self.is_mock:
+                self.index.delete(filter={"document_id": str(document_id)})
+            else:
+                self.mock_store.pop(str(document_id), None)
+        else:
+            try:
+                self.collection.delete(where={"document_id": str(document_id)})
+            except Exception:
+                pass
+
+    def get_document_chunks(self, document_id: uuid.UUID) -> List[str]:
+        """Fetch indexed text chunks for verification and tests."""
+        if self.provider == "pinecone":
+            if self.is_mock:
+                return [item["text"] for item in self.mock_store.get(str(document_id), [])]
+            return []  # Defer production queries to Phase 3
+        else:
+            res = self.collection.get(where={"document_id": str(document_id)})
+            return res.get("documents", []) or []
+
 class DocumentService:
     """Service layer handling document storage, content parsing, splitting, and vector indexing."""
 
@@ -79,14 +171,12 @@ class DocumentService:
         self.document_repo = document_repo
         self.audit_repo = audit_repo
         
-        # Ensure directories exist
+        # Ensure upload directory exists
         os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-        os.makedirs(settings.CHROMA_DB_DIR, exist_ok=True)
         
-        # Initialize Chroma Client & Collection
-        self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
-        self.collection = self.chroma_client.get_or_create_collection(
-            name="documents",
+        # Initialize the vector store adapter
+        self.vector_store = VectorStoreAdapter(
+            provider=settings.VECTOR_DB_PROVIDER,
             embedding_function=self._get_embedding_function()
         )
 
@@ -125,7 +215,7 @@ class DocumentService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
     ) -> None:
-        """Parse, segment, and index document chunks in ChromaDB asynchronously."""
+        """Parse, segment, and index document chunks asynchronously."""
         document = await self.document_repo.update_status(document_id, DocumentStatus.PROCESSING)
         if not document:
             return
@@ -140,21 +230,8 @@ class DocumentService:
             splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
             chunks = splitter.split_text(text)
 
-            # 3. Add to ChromaDB
-            ids = [f"{document_id}_{i}" for i in range(len(chunks))]
-            metadatas = [
-                {
-                    "document_id": str(document_id),
-                    "chunk_index": i,
-                    "filename": document.filename
-                }
-                for i in range(len(chunks))
-            ]
-            self.collection.add(
-                ids=ids,
-                documents=chunks,
-                metadatas=metadatas
-            )
+            # 3. Add to Vector Store
+            self.vector_store.add_document(document_id, document.filename, chunks)
 
             # 4. Mark Complete
             await self.document_repo.update_status(document_id, DocumentStatus.COMPLETED)
@@ -185,16 +262,13 @@ class DocumentService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
     ) -> bool:
-        """Remove document file, database metadata, and ChromaDB vector index references."""
+        """Remove document file, database metadata, and vector index references."""
         document = await self.document_repo.get_by_id(document_id)
         if not document:
             return False
 
-        # 1. Delete Chroma vectors
-        try:
-            self.collection.delete(where={"document_id": str(document_id)})
-        except Exception:
-            pass
+        # 1. Delete vectors
+        self.vector_store.delete_document(document_id)
 
         # 2. Remove physical file
         file_path = os.path.join(settings.UPLOAD_DIR, f"{document_id}_{document.filename}")

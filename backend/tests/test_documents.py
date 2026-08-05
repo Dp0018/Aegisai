@@ -11,7 +11,7 @@ import chromadb
 from app.main import app
 from app.core.config import settings
 from app.db.session import engine
-from app.services.document import DocumentService, MockEmbeddingFunction
+from app.services.document import DocumentService, MockEmbeddingFunction, VectorStoreAdapter
 from app.repositories.document import DocumentRepository
 from app.repositories.audit import AuditLogRepository
 from app.db.redis import redis_client
@@ -136,24 +136,26 @@ def test_document_ingestion_lifecycle():
             res_status_docx = await ac.get(f"/api/v1/documents/{docx_doc_id}", headers=headers)
             assert res_status_docx.json()["status"] == "completed"
 
-            # 7. Check ChromaDB collection contents
-            chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
-            collection = chroma_client.get_collection("documents")
+            # 7. Verify chunking and indexing in the vector store via VectorStoreAdapter
+            adapter = VectorStoreAdapter(
+                provider=settings.VECTOR_DB_PROVIDER,
+                embedding_function=MockEmbeddingFunction()
+            )
             
             # Verify Markdown chunks
-            md_results = collection.get(where={"document_id": md_doc_id})
-            assert len(md_results["ids"]) > 0
-            assert "AegisAI Doc" in md_results["documents"][0]
+            md_chunks = adapter.get_document_chunks(md_doc_id)
+            assert len(md_chunks) > 0
+            assert "AegisAI Doc" in md_chunks[0]
 
             # Verify PDF chunks
-            pdf_results = collection.get(where={"document_id": pdf_doc_id})
-            assert len(pdf_results["ids"]) > 0
-            assert "Hello world from PDF" in pdf_results["documents"][0]
+            pdf_chunks = adapter.get_document_chunks(pdf_doc_id)
+            assert len(pdf_chunks) > 0
+            assert "Hello world from PDF" in pdf_chunks[0]
 
             # Verify DOCX chunks
-            docx_results = collection.get(where={"document_id": docx_doc_id})
-            assert len(docx_results["ids"]) > 0
-            assert "test paragraph inside a Word DOCX" in docx_results["documents"][0]
+            docx_chunks = adapter.get_document_chunks(docx_doc_id)
+            assert len(docx_chunks) > 0
+            assert "test paragraph inside a Word DOCX" in docx_chunks[0]
 
             # 8. Delete document
             res_delete = await ac.delete(f"/api/v1/documents/{md_doc_id}", headers=headers)
@@ -167,9 +169,9 @@ def test_document_ingestion_lifecycle():
             file_path = os.path.join(settings.UPLOAD_DIR, f"{md_doc_id}_sample.md")
             assert not os.path.exists(file_path)
 
-            # Verify deleted from ChromaDB
-            md_results_after = collection.get(where={"document_id": md_doc_id})
-            assert len(md_results_after["ids"]) == 0
+            # Verify deleted from Vector store
+            md_chunks_after = adapter.get_document_chunks(md_doc_id)
+            assert len(md_chunks_after) == 0
             
             await engine.dispose()
             await redis_client.aclose()
