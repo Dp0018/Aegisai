@@ -9,8 +9,8 @@ This file records completed development blocks, active iterations, and outstandi
 - [x] Frontend Next.js app initialization (pnpm/TS/Tailwind)
 - [x] Core agent skills setup (.agents/skills/)
 - [x] Phase 1: Authentication & User DB Models
-- [ ] Phase 2: Ingestion Pipeline (Active)
-- [ ] Phase 3: RAG Retrieval
+- [x] Phase 2: Ingestion Pipeline
+- [ ] Phase 3: RAG Retrieval (Active)
 - [ ] Phase 4: LangGraph Coordinator Workflows
 - [ ] Phase 5: Execution Tools
 - [ ] Phase 6: Thread and Memory Layer
@@ -20,6 +20,6 @@ This file records completed development blocks, active iterations, and outstandi
 
 ## Active Phase Details
 
-### Phase 2: Document Ingestion & Processing Pipeline
-- **Goal**: Establish Document upload API endpoints, parse PDF, DOCX, and Markdown formats, integrate LangChain document splitters for semantic chunking, and configure ChromaDB vector store collection mappings.
-- **Current Task**: Planning the document upload APIs and utility services for document parsing.
+### Phase 3: RAG Retrieval Service
+- **Goal**: Build embedding creation wrappers (`text-embedding-3-large`), implement context retrieve routers executing cosine similarity lookups, and setup prompt templates for grounded answers.
+- **Current Task**: Planning the embedding wrapper integrations and context query lookup strategies.

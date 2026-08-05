@@ -5,6 +5,7 @@ from sqlalchemy import text
 from app.main import app
 from app.db.session import engine
 from app.core.security import get_password_hash, verify_password
+from app.db.redis import redis_client
 
 def run_async(coro):
     """Helper to run async test coroutines in a clean event loop."""
@@ -15,6 +16,8 @@ async def clear_db():
     async with engine.begin() as conn:
         await conn.execute(text("TRUNCATE TABLE audit_logs CASCADE;"))
         await conn.execute(text("TRUNCATE TABLE users CASCADE;"))
+    await engine.dispose()
+    await redis_client.aclose()
 
 def test_password_hashing():
     """Verify password hashing and verification functions work correctly."""
@@ -134,5 +137,8 @@ def test_auth_lifecycle():
             # Logged out access token should fail to access test endpoints
             res_post_logout_test = await ac.get("/api/v1/auth/test-admin", headers=new_admin_headers)
             assert res_post_logout_test.status_code == 401
+
+            await engine.dispose()
+            await redis_client.aclose()
 
     run_async(_test())

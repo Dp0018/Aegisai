@@ -13,11 +13,14 @@ from app.db.redis import get_redis
 from app.models.user import User, UserRole
 from app.repositories.user import UserRepository
 from app.repositories.audit import AuditLogRepository
+from app.repositories.document import DocumentRepository
 from app.services.auth import AuthService
+from app.services.document import DocumentService
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_PREFIX}/auth/token"
 )
+
 
 async def get_user_repository(db: AsyncSession = Depends(get_db_session)) -> UserRepository:
     """Dependency producing UserRepository instance."""
@@ -34,6 +37,17 @@ async def get_auth_service(
 ) -> AuthService:
     """Dependency producing AuthService instance."""
     return AuthService(user_repo, audit_repo, redis)
+
+async def get_document_repository(db: AsyncSession = Depends(get_db_session)) -> DocumentRepository:
+    """Dependency producing DocumentRepository instance."""
+    return DocumentRepository(db)
+
+async def get_document_service(
+    doc_repo: DocumentRepository = Depends(get_document_repository),
+    audit_repo: AuditLogRepository = Depends(get_audit_repository)
+) -> DocumentService:
+    """Dependency producing DocumentService instance."""
+    return DocumentService(doc_repo, audit_repo)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

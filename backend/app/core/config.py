@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:secure_password_123@localhost:5432/aegisai_db"
     REDIS_URL: str = "redis://:redis_password_123@localhost:6379/0"
 
+    # Storage Config
+    UPLOAD_DIR: str = "storage/documents"
+    CHROMA_DB_DIR: str = "storage/chromadb"
+
+    # OpenAI Settings
+    OPENAI_API_KEY: str = "dummy_key_replace_in_env"
+
     # JWT Security Secrets (Defaults for local development)
     JWT_SECRET_KEY: str = "super_secure_jwt_access_secret_key_change_me_in_production_9f2a71"
     JWT_REFRESH_SECRET_KEY: str = "super_secure_jwt_refresh_secret_key_change_me_in_production_8c3b12"
