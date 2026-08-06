@@ -25,3 +25,8 @@ export async function logoutRequest(refreshToken: string): Promise<{ detail: str
     });
     return response.data;
 }
+
+export async function listUsersRequest(): Promise<UserResponse[]> {
+    const response = await apiClient.get<UserResponse[]>("/auth/users");
+    return response.data;
+}

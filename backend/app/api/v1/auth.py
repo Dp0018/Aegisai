@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -202,4 +202,20 @@ async def test_admin_endpoint(current_user: User = Depends(get_admin_user)):
 async def test_operator_endpoint(current_user: User = Depends(get_operator_user)):
     """Test endpoint accessible by operators and administrators."""
     return {"message": "Welcome Operator", "email": current_user.email}
+
+@router.get(
+    "/users",
+    response_model=List[UserResponse],
+    responses={
+        401: {"model": ErrorResponse},
+        403: {"model": ErrorResponse}
+    }
+)
+async def list_users(
+    current_user: User = Depends(get_admin_user),
+    user_repo: UserRepository = Depends(get_user_repository)
+):
+    """List all registered platform user profiles. Restricted to administrators."""
+    users = await user_repo.list_all()
+    return users
 

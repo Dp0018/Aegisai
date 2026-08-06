@@ -42,3 +42,9 @@ class UserRepository:
         query = select(func.count()).select_from(User)
         result = await self.db.execute(query)
         return result.scalar() or 0
+
+    async def list_all(self) -> list[User]:
+        """Fetch all registered platform users sorted by created_at."""
+        query = select(User).order_by(User.created_at.asc())
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

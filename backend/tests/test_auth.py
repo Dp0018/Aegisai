@@ -109,6 +109,17 @@ def test_auth_lifecycle():
             res_op_op_test = await ac.get("/api/v1/auth/test-operator", headers=op_headers)
             assert res_op_op_test.status_code == 200
             
+            # --- 6.5 USERS ENDPOINT ACCESS VERIFICATION ---
+            # Admin can retrieve users list
+            res_admin_users = await ac.get("/api/v1/auth/users", headers=admin_headers)
+            assert res_admin_users.status_code == 200
+            users_list = res_admin_users.json()
+            assert len(users_list) == 2  # Admin + Operator
+            
+            # Operator CANNOT access users list (Forbidden 403)
+            res_op_users = await ac.get("/api/v1/auth/users", headers=op_headers)
+            assert res_op_users.status_code == 403
+            
             # --- 7. REFRESH TOKEN ROTATION ---
             refresh_payload = {
                 "refresh_token": tokens["refresh_token"]

@@ -14,7 +14,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             const isPublicRoute = pathname === "/login" || pathname === "/register";
             if (!user && !isPublicRoute) {
                 router.replace("/login");
-            } else if (user && isPublicRoute) {
+            } else if (user && pathname === "/login") {
+                router.replace("/");
+            } else if (user && pathname === "/register" && user.role !== "admin") {
                 router.replace("/");
             }
         }
@@ -35,10 +37,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     const isPublicRoute = pathname === "/login" || pathname === "/register";
+    const allowAdminRegister = user && pathname === "/register" && user.role === "admin";
     
     // Prevent screen flashing of guarded content
     if (!user && !isPublicRoute) return null;
-    if (user && isPublicRoute) return null;
+    if (user && isPublicRoute && !allowAdminRegister) return null;
 
     return <>{children}</>;
 }

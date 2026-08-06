@@ -34,6 +34,9 @@ def clean_vector_store():
 
 def test_agent_graph_execution():
     """Verify routing, escalation, and HITL checkpointer loops in LangGraph agent."""
+    settings.OPENAI_API_KEY = "dummy_key_replace_in_env"
+    settings.PINECONE_API_KEY = "dummy_pinecone_key"
+    
     async def _test():
         await clear_db()
 

@@ -49,17 +49,18 @@ export function useAuth() {
                         localStorage.removeItem("user_name");
                         return null;
                     }
+                    const rawRole = claims.role || "operator";
+                    const normalizedRole = rawRole.toLowerCase().replace("userrole.", "");
                     return {
                         id: claims.sub,
                         email: storedEmail || "user@aegisai.com",
                         full_name: storedName || "Operator User",
-                        role: (claims.role || "operator") as any,
+                        role: normalizedRole as any,
                     };
                 }
             }
             return null;
         },
-        initialData: null,
         staleTime: Infinity, // Keep session memory active
     });
 
@@ -72,11 +73,13 @@ export function useAuth() {
             localStorage.setItem("user_email", payload.email);
 
             const claims = parseJwt(response.access_token);
+            const rawRole = claims?.role || "operator";
+            const normalizedRole = rawRole.toLowerCase().replace("userrole.", "");
             const userSession: UserSession = {
                 id: claims?.sub || "",
                 email: payload.email,
                 full_name: claims?.name || "Operator User",
-                role: (claims?.role || "operator") as any,
+                role: normalizedRole as any,
             };
 
             localStorage.setItem("user_name", userSession.full_name);
@@ -106,10 +109,14 @@ export function useAuth() {
         onSuccess: (data) => {
             toast.add({
                 title: "Account Created Successfully",
-                description: "You can now log in to the console.",
+                description: user ? "New profile has been registered." : "You can now log in to the console.",
                 type: "success",
             });
-            router.push("/login");
+            if (user) {
+                router.push("/");
+            } else {
+                router.push("/login");
+            }
         },
         onError: (err: any) => {
             toast.add({

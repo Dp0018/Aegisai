@@ -92,12 +92,8 @@ class AgentService:
         if any(k in query for k in escalation_keywords):
             return {"next_node": "escalate", "escalated": True}
 
-        # Knowledge lookup keywords
-        research_keywords = ["docs", "help", "information", "how to", "setup", "configure", "integrate", "smtp", "pinecone", "chroma", "vector"]
-        if any(k in query for k in research_keywords):
-            return {"next_node": "research"}
-
-        return {"next_node": "respond"}
+        # Route all non-escalation queries to RAG research by default
+        return {"next_node": "research"}
 
     async def _research_node(self, state: AgentState) -> dict:
         """Call RAG retrieval to fetch supporting documentation context."""
@@ -114,7 +110,7 @@ class AgentService:
             }
         )
         
-        chunks = await self.rag_service.retrieve_context(query, top_k=2)
+        chunks = await self.rag_service.retrieve_context(query, top_k=5)
         
         # Log telemetry action for research results observation
         observation_text = f"Retrieved {len(chunks)} relevant chunks."

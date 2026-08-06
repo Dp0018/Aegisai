@@ -99,7 +99,7 @@ class AuthService:
     async def create_tokens_for_user(self, user: User) -> Token:
         """Create access and refresh token pair for a validated user."""
         subject = str(user.id)
-        access_token = create_access_token(subject=subject, role=user.role)
+        access_token = create_access_token(subject=subject, role=user.role.value)
         refresh_token = create_refresh_token(subject=subject)
         return Token(
             access_token=access_token,
