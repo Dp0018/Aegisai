@@ -40,3 +40,22 @@ class MemoryResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class ThreadResponse(BaseModel):
+    """Pydantic response schema representing a conversation thread."""
+    id: uuid.UUID
+    user_id: Optional[uuid.UUID]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ActionResponse(BaseModel):
+    """Pydantic response schema representing a logged agent action."""
+    id: uuid.UUID
+    thread_id: uuid.UUID
+    action_type: str
+    payload: dict
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

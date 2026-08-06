@@ -1,1 +1,0 @@
-ChromaDB and Pinecone are vector databases. Pinecone is a cloud serverless vector database.

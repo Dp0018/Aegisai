@@ -73,3 +73,10 @@ class ThreadRepository:
             .order_by(Action.created_at.asc())
         )
         return list(result.scalars().all())
+
+    async def list_all_threads(self) -> List[Thread]:
+        """Fetch all conversation threads sorted by updated_at descending."""
+        result = await self.db.execute(
+            select(Thread).order_by(Thread.updated_at.desc())
+        )
+        return list(result.scalars().all())

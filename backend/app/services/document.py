@@ -97,6 +97,8 @@ class VectorStoreAdapter:
     def add_document(self, document_id: uuid.UUID, filename: str, chunks: List[str]) -> None:
         """Upsert text chunks and metadata to the configured vector store."""
         embeddings = self.embedding_function(chunks)
+        # Convert to native Python floats to avoid serialization issues (e.g. numpy.float32) in Pinecone
+        embeddings = [[float(x) for x in emb] for emb in embeddings]
         
         if self.provider == "pinecone":
             if not self.is_mock:
@@ -113,7 +115,11 @@ class VectorStoreAdapter:
                     }
                     for i in range(len(chunks))
                 ]
-                self.index.upsert(vectors=vectors)
+                # Batch upsert in chunks of 100 to stay within Pinecone payload limits
+                batch_size = 100
+                for batch_start in range(0, len(vectors), batch_size):
+                    batch = vectors[batch_start:batch_start + batch_size]
+                    self.index.upsert(vectors=batch)
             else:
                 # In-memory mock storage
                 self.mock_store[str(document_id)] = [
@@ -145,7 +151,11 @@ class VectorStoreAdapter:
         """Remove document vectors from the configured vector store."""
         if self.provider == "pinecone":
             if not self.is_mock:
-                self.index.delete(filter={"document_id": str(document_id)})
+                try:
+                    self.index.delete(filter={"document_id": str(document_id)})
+                except Exception:
+                    # Silently ignore if namespace/vectors not found (doc never indexed)
+                    pass
             else:
                 self.mock_store.pop(str(document_id), None)
         else:
@@ -173,7 +183,8 @@ class VectorStoreAdapter:
         """Perform similarity queries returning matches (text, filename, score, document_id)."""
         if self.provider == "pinecone":
             embeddings = self.embedding_function([query_text])
-            query_vector = embeddings[0]
+            # Convert to native Python floats to avoid serialization issues (e.g. numpy.float32) in Pinecone
+            query_vector = [float(x) for x in embeddings[0]]
             
             if not self.is_mock:
                 filter_dict = {}
@@ -292,7 +303,22 @@ class DocumentService:
         elif "word" in content_type or file_path.endswith(".docx"):
             import docx
             doc = docx.Document(file_path)
-            return "\n".join([p.text for p in doc.paragraphs])
+            text_parts = []
+            
+            for p in doc.paragraphs:
+                if p.text.strip():
+                    text_parts.append(p.text)
+                    
+            seen_cells = set()
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        if cell._tc not in seen_cells:
+                            seen_cells.add(cell._tc)
+                            if cell.text.strip():
+                                text_parts.append(cell.text)
+                                
+            return "\n".join(text_parts)
         else:
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
