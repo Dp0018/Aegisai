@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     # Databases and Cache
     DATABASE_URL: str = "postgresql+asyncpg://postgres:secure_password_123@localhost:5432/aegisai_db"
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
     REDIS_URL: str = "redis://:redis_password_123@localhost:6379/0"
 
     # Storage Config

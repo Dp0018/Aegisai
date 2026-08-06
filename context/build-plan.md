@@ -46,3 +46,19 @@ This plan organizes the implementation of the AegisAI platform into progressive,
 ### Phase 7: Next.js Frontend Console
 - Connect TanStack Query state managers.
 - Design responsive dashboards: Live Inbox, Reasoning Timeline, retrieved documents sidebar, and HITL action controls.
+
+### Phase 8: Event Streaming & Real-Time Sync (Kafka & WebSockets)
+- Configure Zookeeper and Apache Kafka services in docker-compose.
+- Set up ticket event and audit log Kafka producers/consumers on backend.
+- Replace HTTP polling in Chat Console/Telemetry with native WebSocket connections.
+
+### Phase 9: Observability & Monitoring
+- Add Prometheus exporter middleware to FastAPI.
+- Configure Grafana dashboards to track latency, token usage, and agent execution times.
+- Integrate OpenTelemetry for distributed trace observability.
+
+### Phase 10: Cloud Deployment & Orchestration (Docker & Kubernetes)
+- Package Frontend and Backend containers in Dockerfiles.
+- Build multi-container orchestration in docker-compose.
+- Write Kubernetes manifests (Deployments, Services, Ingress, HPA, ConfigMaps, Secrets) for AWS EKS cloud deployment.
+

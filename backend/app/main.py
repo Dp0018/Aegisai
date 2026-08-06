@@ -1,12 +1,30 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.v1.router import api_router
+from app.core.kafka import (
+    init_kafka_producer,
+    close_kafka_producer,
+    start_kafka_consumers,
+    stop_kafka_consumers
+)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_kafka_producer()
+    await start_kafka_consumers()
+    yield
+    # Shutdown
+    await stop_kafka_consumers()
+    await close_kafka_producer()
 
 app = FastAPI(
     title="AegisAI Backend Platform",
     description="Minimal entrypoint for AegisAI local service validation",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # Set up CORS middleware to allow cross-origin requests from the Next.js frontend

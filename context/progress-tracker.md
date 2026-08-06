@@ -14,12 +14,19 @@ This file records completed development blocks, active iterations, and outstandi
 - [x] Phase 4: LangGraph Coordinator Workflows
 - [x] Phase 5: Action Tools Integration
 - [x] Phase 6: Thread and Memory Layer
-- [/] Phase 7: React Frontend Dashboard (Part 1, 2 & 3 [COMPLETE], Part 4: Retrieval Analytics [ACTIVE])
+- [x] Phase 7: React Frontend Dashboard (Part 1, 2 & 3 [COMPLETE], Part 4: Retrieval Analytics [COMPLETE])
+- [x] Phase 8: Event Streaming & Real-Time Sync (Kafka & WebSockets) [COMPLETE]
+- [/] Phase 9: Observability & Monitoring (Prometheus/Grafana/OpenTelemetry) [ACTIVE]
+- [ ] Phase 10: Cloud Deployment & Orchestration (Docker/Kubernetes manifests)
 
 ---
 
 ## Active Phase Details
 
-### Phase 7: React Frontend Dashboard
-- **Goal**: Implement React frontend dashboard step-by-step using feature-based folders.
-- **Current Task**: Building Part 4: Retrieval Analytics Workspace (semantic search segments inspector, similarity analytics, and customer profile memory summarization triggers).
+### Phase 9: Observability & Monitoring
+- **Goal**: Configure Prometheus, Grafana dashboards, and OpenTelemetry distributed tracing.
+- **Current Task**: Planning Prometheus metrics exporter middleware and Grafana instrumentation specs.
+
+### Phase 10: Cloud Deployment & Orchestration
+- **Goal**: Containerize the app and write Kubernetes manifests for cloud deployment.
+- **Current Task**: Outlining service deployments and horizontal scaling policies.

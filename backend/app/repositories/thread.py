@@ -41,6 +41,23 @@ class ThreadRepository:
         self.db.add(message)
         await self.db.commit()
         await self.db.refresh(message)
+        
+        try:
+            from app.core.kafka import publish_kafka_event
+            payload = {
+                "id": str(message.id),
+                "thread_id": str(thread_id),
+                "role": role,
+                "content": content,
+                "created_at": message.created_at.isoformat() if message.created_at else None
+            }
+            await publish_kafka_event("telemetry-events", str(thread_id), {
+                "event_type": "message_created",
+                "message": payload
+            })
+        except Exception:
+            pass
+            
         return message
 
     async def get_thread_messages(self, thread_id: uuid.UUID) -> List[Message]:
@@ -63,6 +80,23 @@ class ThreadRepository:
         self.db.add(action)
         await self.db.commit()
         await self.db.refresh(action)
+        
+        try:
+            from app.core.kafka import publish_kafka_event
+            action_payload = {
+                "id": str(action.id),
+                "thread_id": str(thread_id),
+                "action_type": action_type,
+                "payload": payload,
+                "created_at": action.created_at.isoformat() if action.created_at else None
+            }
+            await publish_kafka_event("telemetry-events", str(thread_id), {
+                "event_type": "action_created",
+                "action": action_payload
+            })
+        except Exception:
+            pass
+            
         return action
 
     async def get_thread_actions(self, thread_id: uuid.UUID) -> List[Action]:

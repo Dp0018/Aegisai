@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getThreadActionsRequest } from "../api/chat";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { ActionResponse } from "../types";
 import { Loader2, Terminal, Cpu, Search, AlertCircle, PlayCircle } from "lucide-react";
 
 interface ReasoningTracesProps {
@@ -10,12 +12,39 @@ interface ReasoningTracesProps {
 }
 
 export function ReasoningTraces({ threadId }: { threadId: string | null }) {
+    const [liveActions, setLiveActions] = useState<ActionResponse[]>([]);
+
+    // Reset live actions when switching threads
+    useEffect(() => {
+        setLiveActions([]);
+    }, [threadId]);
+
+    // Initial load of historical actions
     const { data: actions, isLoading, error } = useQuery({
         queryKey: ["thread-actions", threadId],
         queryFn: () => (threadId ? getThreadActionsRequest(threadId) : Promise.resolve([])),
         enabled: !!threadId,
-        refetchInterval: 3000, // Poll frequently during active runs
     });
+
+    // Listen for live event streams from Kafka over WebSockets
+    useWebSocket(threadId, (message) => {
+        if (message.topic === "telemetry-events" && message.data.event_type === "action_created") {
+            const newAction = message.data.action as ActionResponse;
+            setLiveActions((prev) => {
+                if (prev.some((a) => a.id === newAction.id)) return prev;
+                return [...prev, newAction];
+            });
+        }
+    });
+
+    // Combine historical logs and real-time streams, filtering out duplicates
+    const allActions = useMemo(() => {
+        const initial = actions ?? [];
+        const uniqueLive = liveActions.filter(
+            (la) => !initial.some((ia) => ia.id === la.id)
+        );
+        return [...initial, ...uniqueLive];
+    }, [actions, liveActions]);
 
     if (!threadId) {
         return (
@@ -42,7 +71,7 @@ export function ReasoningTraces({ threadId }: { threadId: string | null }) {
         );
     }
 
-    const hasActions = actions && actions.length > 0;
+    const hasActions = allActions.length > 0;
 
     return (
         <div className="flex h-full flex-col bg-card/10 border-l border-border/40 w-full overflow-hidden">
@@ -63,7 +92,7 @@ export function ReasoningTraces({ threadId }: { threadId: string | null }) {
                         <p className="text-[10px]">Intermediate agent thoughts and actions will stream here during query runs.</p>
                     </div>
                 ) : (
-                    actions.map((action, idx) => {
+                    allActions.map((action, idx) => {
                         const payload = action.payload || {};
                         return (
                             <div key={action.id} className="relative pl-4 border-l border-border/80 space-y-2">

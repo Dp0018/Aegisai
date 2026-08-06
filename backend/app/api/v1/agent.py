@@ -202,3 +202,17 @@ async def list_all_operator_threads(
 ):
     """Retrieve metadata for all conversation threads."""
     return await thread_repo.list_all_threads()
+
+from fastapi import WebSocket, WebSocketDisconnect
+from app.core.websocket import manager
+
+@router.websocket("/ws/{thread_id}")
+async def websocket_endpoint(websocket: WebSocket, thread_id: str):
+    """WebSocket endpoint for streaming real-time agent telemetry logs."""
+    await manager.connect(thread_id, websocket)
+    try:
+        while True:
+            # Keep connection alive; discard any client-sent text
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(thread_id, websocket)

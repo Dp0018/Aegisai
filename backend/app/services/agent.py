@@ -102,18 +102,65 @@ class AgentService:
     async def _research_node(self, state: AgentState) -> dict:
         """Call RAG retrieval to fetch supporting documentation context."""
         query = state["query"]
+        thread_id = state["thread_id"]
+        
+        # Log telemetry action for research node start
+        await self.thread_repo.create_action(
+            thread_id,
+            "knowledge_base_search",
+            {
+                "thought": f"Retrieving relevant documentation chunks from vector database for: '{query}'",
+                "action": f"query_similarity(query_text='{query}')"
+            }
+        )
+        
         chunks = await self.rag_service.retrieve_context(query, top_k=2)
+        
+        # Log telemetry action for research results observation
+        observation_text = f"Retrieved {len(chunks)} relevant chunks."
+        if chunks:
+            observation_text += f" Top chunk score: {chunks[0]['score']:.2f} from file: '{chunks[0]['filename']}'."
+        await self.thread_repo.create_action(
+            thread_id,
+            "knowledge_base_result",
+            {
+                "observation": observation_text
+            }
+        )
+        
         return {"context_chunks": chunks}
 
     async def _respond_node(self, state: AgentState) -> dict:
         """Generate response draft. Re-evaluates draft if feedback was provided."""
         query = state["query"]
+        thread_id = state["thread_id"]
         context_chunks = state.get("context_chunks", [])
         
         # Check if we are resuming from an operator redraft feedback
         if state.get("approved") is False:
             feedback = state.get("feedback", "")
+            
+            # Log redraft thought
+            await self.thread_repo.create_action(
+                thread_id,
+                "response_redrafting",
+                {
+                    "thought": f"Redrafting response to incorporate human feedback: '{feedback}'",
+                    "action": "generate_response(feedback=feedback)"
+                }
+            )
+            
             new_draft = await self._generate_response(query, context_chunks, feedback=feedback)
+            
+            # Log decision
+            await self.thread_repo.create_action(
+                thread_id,
+                "response_redraft_complete",
+                {
+                    "decision": "New response draft prepared. Waiting for human approval."
+                }
+            )
+            
             return {
                 "response": new_draft,
                 "requires_approval": True,
@@ -121,8 +168,28 @@ class AgentService:
                 "feedback": None
             }
 
+        # Log draft thought
+        await self.thread_repo.create_action(
+            thread_id,
+            "response_drafting",
+            {
+                "thought": "Formulating grounded draft response using retrieved context.",
+                "action": "generate_response()"
+            }
+        )
+        
         # Generate original draft response
         draft = await self._generate_response(query, context_chunks)
+        
+        # Log decision
+        await self.thread_repo.create_action(
+            thread_id,
+            "response_draft_complete",
+            {
+                "decision": "Response draft prepared. Waiting for human approval."
+            }
+        )
+        
         return {
             "response": draft,
             "requires_approval": True,
