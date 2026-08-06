@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.core.config import settings
 from app.api.v1.router import api_router
 from app.core.kafka import (
@@ -26,6 +27,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+# Expose Prometheus metric endpoint
+Instrumentator().instrument(app).expose(app)
 
 # Set up CORS middleware to allow cross-origin requests from the Next.js frontend
 app.add_middleware(

@@ -16,17 +16,13 @@ This file records completed development blocks, active iterations, and outstandi
 - [x] Phase 6: Thread and Memory Layer
 - [x] Phase 7: React Frontend Dashboard (Part 1, 2 & 3 [COMPLETE], Part 4: Retrieval Analytics [COMPLETE])
 - [x] Phase 8: Event Streaming & Real-Time Sync (Kafka & WebSockets) [COMPLETE]
-- [/] Phase 9: Observability & Monitoring (Prometheus/Grafana/OpenTelemetry) [ACTIVE]
-- [ ] Phase 10: Cloud Deployment & Orchestration (Docker/Kubernetes manifests)
+- [x] Phase 9: Observability & Monitoring (Prometheus/Grafana/OpenTelemetry) [COMPLETE]
+- [/] Phase 10: Cloud Deployment & Orchestration (Docker/Kubernetes manifests) [ACTIVE]
 
 ---
 
 ## Active Phase Details
 
-### Phase 9: Observability & Monitoring
-- **Goal**: Configure Prometheus, Grafana dashboards, and OpenTelemetry distributed tracing.
-- **Current Task**: Planning Prometheus metrics exporter middleware and Grafana instrumentation specs.
-
 ### Phase 10: Cloud Deployment & Orchestration
 - **Goal**: Containerize the app and write Kubernetes manifests for cloud deployment.
-- **Current Task**: Outlining service deployments and horizontal scaling policies.
+- **Current Task**: Planning Dockerfile structures for backend/frontend and drafting deployment manifests.
