@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useTheme } from "./ThemeProvider";
+import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
     const { theme, toggleTheme } = useTheme();
@@ -9,20 +10,35 @@ export function ThemeToggle() {
     return (
         <button
             onClick={toggleTheme}
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card/60 text-foreground shadow-sm backdrop-blur-md transition-all hover:bg-accent hover:text-accent-foreground active:scale-95"
+            className="relative flex h-9 w-[76px] items-center justify-between rounded-full bg-muted/80 p-1 border border-border/80 cursor-pointer select-none transition-colors focus:outline-none"
             aria-label="Toggle Theme"
         >
-            {theme === "dark" ? (
-                // Sun Icon (when in dark mode)
-                <svg className="h-[1.2rem] w-[1.2rem] transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                </svg>
-            ) : (
-                // Moon Icon (when in light mode)
-                <svg className="h-[1.2rem] w-[1.2rem] transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            )}
+            {/* Sliding background indicator pill */}
+            <div
+                className={`absolute h-7 w-7 rounded-full bg-card shadow-sm border border-border/40 transition-all duration-300 ${
+                    theme === "dark" 
+                        ? "translate-x-[36px]" 
+                        : "translate-x-0"
+                }`}
+            />
+            
+            {/* Sun Icon (Left) */}
+            <div className={`relative z-10 flex h-7 w-7 items-center justify-center transition-colors duration-300 ${
+                theme === "light" 
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-foreground"
+            }`}>
+                <Sun className="h-[1.05rem] w-[1.05rem]" />
+            </div>
+
+            {/* Moon Icon (Right) */}
+            <div className={`relative z-10 flex h-7 w-7 items-center justify-center transition-colors duration-300 ${
+                theme === "dark" 
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-foreground"
+            }`}>
+                <Moon className="h-[1.05rem] w-[1.05rem]" />
+            </div>
         </button>
     );
 }

@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AegisAI Console",
+  title: "Aether Control",
   description: "Enterprise operator-in-the-loop support agent dashboard.",
 };
 

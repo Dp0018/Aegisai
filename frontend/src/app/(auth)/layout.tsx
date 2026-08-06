@@ -1,3 +1,4 @@
+import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -20,10 +21,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 
                 {/* Top Brand Block */}
                 <div className="relative z-10 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-md">
-                        A
-                    </div>
-                    <span className="text-xl font-bold tracking-tight">AegisAI Platform</span>
+                    <Logo className="h-11 w-11 shrink-0" />
+                    <span className="text-xl font-bold tracking-tight">Aether Control</span>
                 </div>
 
                 {/* Animated Interactive Core Graphics */}

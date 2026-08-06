@@ -48,7 +48,7 @@ export function LoginForm() {
                         Operator Sign In
                     </h1>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                        Provide credentials to unlock the AegisAI coordinator dashboard.
+                        Provide credentials to unlock the Aether Control dashboard.
                     </p>
                 </div>
 
