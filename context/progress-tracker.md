@@ -11,8 +11,8 @@ This file records completed development blocks, active iterations, and outstandi
 - [x] Phase 1: Authentication & User DB Models
 - [x] Phase 2: Ingestion Pipeline
 - [x] Phase 3: RAG Retrieval
-- [ ] Phase 4: LangGraph Coordinator Workflows (Active)
-- [ ] Phase 5: Execution Tools
+- [x] Phase 4: LangGraph Coordinator Workflows
+- [ ] Phase 5: Execution Tools (Active)
 - [ ] Phase 6: Thread and Memory Layer
 - [ ] Phase 7: React Frontend Dashboard
 
@@ -20,6 +20,6 @@ This file records completed development blocks, active iterations, and outstandi
 
 ## Active Phase Details
 
-### Phase 4: LangGraph Agent Core
-- **Goal**: Define StateGraph workflow structures and implement Coordinator (routing), Research (vector context lookup), Response (drafting), and Escalation nodes with human-in-the-loop (HITL) interrupt hooks.
-- **Current Task**: Planning the graph state structure, Coordinator decisions, and edge routing.
+### Phase 5: Action Tools Integration
+- **Goal**: Add execution tool libraries including vector search lookup, database customer details queries, ticketing service integrations, and simulated SMTP/Email sending.
+- **Current Task**: Planning the execution tool abstraction layer and email simulator schemas.

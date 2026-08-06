@@ -17,6 +17,7 @@ from app.repositories.document import DocumentRepository
 from app.services.auth import AuthService
 from app.services.document import DocumentService
 from app.services.rag import RAGService
+from app.services.agent import AgentService
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_PREFIX}/auth/token"
@@ -55,6 +56,12 @@ async def get_rag_service(
 ) -> RAGService:
     """Dependency producing RAGService instance."""
     return RAGService(doc_service)
+
+async def get_agent_service(
+    rag_service: RAGService = Depends(get_rag_service)
+) -> AgentService:
+    """Dependency producing AgentService instance."""
+    return AgentService(rag_service)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
