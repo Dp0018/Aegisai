@@ -18,6 +18,9 @@ from app.services.auth import AuthService
 from app.services.document import DocumentService
 from app.services.rag import RAGService
 from app.services.agent import AgentService
+from app.repositories.thread import ThreadRepository
+from app.repositories.memory import MemoryRepository
+from app.services.memory import MemoryService
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_PREFIX}/auth/token"
@@ -57,11 +60,29 @@ async def get_rag_service(
     """Dependency producing RAGService instance."""
     return RAGService(doc_service)
 
+async def get_thread_repository(db: AsyncSession = Depends(get_db_session)) -> ThreadRepository:
+    """Dependency producing ThreadRepository instance."""
+    return ThreadRepository(db)
+
+async def get_memory_repository(db: AsyncSession = Depends(get_db_session)) -> MemoryRepository:
+    """Dependency producing MemoryRepository instance."""
+    return MemoryRepository(db)
+
+async def get_memory_service(
+    thread_repo: ThreadRepository = Depends(get_thread_repository),
+    memory_repo: MemoryRepository = Depends(get_memory_repository)
+) -> MemoryService:
+    """Dependency producing MemoryService instance."""
+    return MemoryService(thread_repo, memory_repo)
+
 async def get_agent_service(
-    rag_service: RAGService = Depends(get_rag_service)
+    rag_service: RAGService = Depends(get_rag_service),
+    thread_repo: ThreadRepository = Depends(get_thread_repository)
 ) -> AgentService:
     """Dependency producing AgentService instance."""
-    return AgentService(rag_service)
+    return AgentService(rag_service, thread_repo)
+
+
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

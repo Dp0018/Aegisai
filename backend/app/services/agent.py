@@ -6,11 +6,13 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from app.core.config import settings
 from app.services.rag import RAGService
+from app.repositories.thread import ThreadRepository
 from app.services.tools import create_support_ticket, send_smtp_email
 
 class AgentState(TypedDict):
     """The State schema representing context data passing through the StateGraph."""
     query: str
+    thread_id: uuid.UUID
     context_chunks: List[dict]
     response: Optional[str]
     escalated: bool
@@ -25,8 +27,9 @@ class AgentService:
     # Shared checkpointer across separate request lifetimes
     checkpointer = InMemorySaver()
 
-    def __init__(self, rag_service: RAGService):
+    def __init__(self, rag_service: RAGService, thread_repo: ThreadRepository):
         self.rag_service = rag_service
+        self.thread_repo = thread_repo
         self.graph = self._compile_graph()
 
     def _compile_graph(self) -> StateGraph:
@@ -128,25 +131,38 @@ class AgentService:
         }
 
     async def _escalate_node(self, state: AgentState) -> dict:
-        """Handle support escalations and trigger ticket creation tool."""
+        """Handle support escalations, create tickets, and persist message/actions in PostgreSQL."""
         query = state["query"]
+        thread_id = state["thread_id"]
         emails = re.findall(r'[\w\.-]+@[\w\.-]+', query)
         email = emails[0] if emails else "escalated-customer@aegisai.com"
 
         ticket = create_support_ticket(email=email, issue=query, priority="high")
+        msg_text = f"This request requires account/billing access. Escalated to support queue. Support ticket created: {ticket['ticket_id']} (Priority: {ticket['priority']})."
+
+        # Database persistence
+        await self.thread_repo.create_message(thread_id, "assistant", msg_text)
+        await self.thread_repo.create_action(thread_id, "support_ticket_created", ticket)
+
         return {
             "escalated": True,
-            "response": f"This request requires account/billing access. Escalated to support queue. Support ticket created: {ticket['ticket_id']} (Priority: {ticket['priority']})."
+            "response": msg_text
         }
 
     async def _email_dispatch_node(self, state: AgentState) -> dict:
-        """Simulate SMTP dispatch once response has been approved by the operator."""
+        """Simulate SMTP dispatch and persist message/actions in PostgreSQL."""
         query = state["query"]
         response = state["response"] or ""
+        thread_id = state["thread_id"]
         emails = re.findall(r'[\w\.-]+@[\w\.-]+', query)
         email = emails[0] if emails else "customer@aegisai.com"
 
-        send_smtp_email(to_email=email, subject="Response from AegisAI Support", body=response)
+        log_entry = send_smtp_email(to_email=email, subject="Response from AegisAI Support", body=response)
+        
+        # Database persistence
+        await self.thread_repo.create_message(thread_id, "assistant", response)
+        await self.thread_repo.create_action(thread_id, "smtp_email_sent", log_entry)
+
         return {
             "requires_approval": False
         }

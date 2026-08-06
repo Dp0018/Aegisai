@@ -1,6 +1,7 @@
 import uuid
-from typing import Optional
-from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Optional, List
+from pydantic import BaseModel, Field, ConfigDict
 
 class AgentRunRequest(BaseModel):
     """Pydantic request body for starting or executing an agent run."""
@@ -19,3 +20,23 @@ class AgentRunResponse(BaseModel):
     response: Optional[str] = Field(None, description="The drafted response or status message")
     requires_approval: bool = Field(False, description="Flag indicating if the draft is currently paused for operator approval")
     escalated: bool = Field(False, description="Flag indicating if the query was escalated")
+
+class MessageResponse(BaseModel):
+    """Pydantic response schema representing a single conversation message."""
+    id: uuid.UUID
+    thread_id: uuid.UUID
+    role: str
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MemoryResponse(BaseModel):
+    """Pydantic response schema representing a distilled profile memory."""
+    id: uuid.UUID
+    customer_email: str
+    summary: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

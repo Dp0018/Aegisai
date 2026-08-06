@@ -13,13 +13,13 @@ This file records completed development blocks, active iterations, and outstandi
 - [x] Phase 3: RAG Retrieval
 - [x] Phase 4: LangGraph Coordinator Workflows
 - [x] Phase 5: Action Tools Integration
-- [ ] Phase 6: Thread and Memory Layer (Active)
-- [ ] Phase 7: React Frontend Dashboard
+- [x] Phase 6: Thread and Memory Layer
+- [ ] Phase 7: React Frontend Dashboard (Active)
 
 ---
 
 ## Active Phase Details
 
-### Phase 6: Thread and Memory Layer
-- **Goal**: Implement `threads`, `messages`, `actions`, and `memory` database schemas, set up thread context builders to track conversation history, and write memory Summarizers to extract long-term user logs.
-- **Current Task**: Planning the conversation history schemas, foreign key mappings, and prompt text summarizers.
+### Phase 7: React Frontend Dashboard
+- **Goal**: Implement React frontend components including operators chat panel, document upload widget, RAG retrieval analytics interface, and Human-in-the-Loop review drawer.
+- **Current Task**: Planning UI layouts, context wrappers, and API client integrations.
