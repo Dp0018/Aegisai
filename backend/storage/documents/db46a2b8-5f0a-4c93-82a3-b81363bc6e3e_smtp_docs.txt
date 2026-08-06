@@ -1,0 +1,1 @@
+The AegisAI platform supports integrations with SMTP for sending simulated notifications.

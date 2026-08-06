@@ -159,10 +159,99 @@ class VectorStoreAdapter:
         if self.provider == "pinecone":
             if self.is_mock:
                 return [item["text"] for item in self.mock_store.get(str(document_id), [])]
-            return []  # Defer production queries to Phase 3
+            return []
         else:
             res = self.collection.get(where={"document_id": str(document_id)})
             return res.get("documents", []) or []
+
+    def query_similarity(
+        self,
+        query_text: str,
+        top_k: int = 5,
+        document_ids: Optional[List[uuid.UUID]] = None
+    ) -> List[dict]:
+        """Perform similarity queries returning matches (text, filename, score, document_id)."""
+        if self.provider == "pinecone":
+            embeddings = self.embedding_function([query_text])
+            query_vector = embeddings[0]
+            
+            if not self.is_mock:
+                filter_dict = {}
+                if document_ids:
+                    filter_dict["document_id"] = {"$in": [str(d) for d in document_ids]}
+                
+                res = self.index.query(
+                    vector=query_vector,
+                    top_k=top_k,
+                    include_metadata=True,
+                    filter=filter_dict if filter_dict else None
+                )
+                
+                results = []
+                for match in res.get("matches", []):
+                    metadata = match.get("metadata", {})
+                    results.append({
+                        "text": metadata.get("text", ""),
+                        "filename": metadata.get("filename", ""),
+                        "score": match.get("score", 0.0),
+                        "document_id": metadata.get("document_id", "")
+                    })
+                return results
+            else:
+                # In-memory keyword overlap similarity search for Pinecone testing
+                all_chunks = []
+                for doc_id, chunks in self.mock_store.items():
+                    if document_ids and doc_id not in [str(d) for d in document_ids]:
+                        continue
+                    for chunk in chunks:
+                        all_chunks.append(chunk)
+                
+                query_words = set(query_text.lower().split())
+                scored_chunks = []
+                for chunk in all_chunks:
+                    chunk_text = chunk["text"]
+                    chunk_words = set(chunk_text.lower().split())
+                    match_count = len(query_words.intersection(chunk_words))
+                    score = float(match_count) / max(len(query_words), 1)
+                    scored_chunks.append({
+                        "text": chunk_text,
+                        "filename": chunk["metadata"]["filename"],
+                        "score": score,
+                        "document_id": str(chunk["id"].split("_")[0])
+                    })
+                
+                scored_chunks.sort(key=lambda x: x["score"], reverse=True)
+                return scored_chunks[:top_k]
+        else:
+            # ChromaDB
+            where_clause = None
+            if document_ids:
+                if len(document_ids) == 1:
+                    where_clause = {"document_id": str(document_ids[0])}
+                else:
+                    where_clause = {"document_id": {"$in": [str(d) for d in document_ids]}}
+                    
+            res = self.collection.query(
+                query_texts=[query_text],
+                n_results=top_k,
+                where=where_clause
+            )
+            
+            results = []
+            if res and res.get("documents"):
+                documents = res["documents"][0]
+                metadatas = res["metadatas"][0]
+                distances = res["distances"][0] if "distances" in res else [0.0] * len(documents)
+                
+                for i in range(len(documents)):
+                    score = 1.0 - distances[i]
+                    results.append({
+                        "text": documents[i],
+                        "filename": metadatas[i].get("filename", ""),
+                        "score": score,
+                        "document_id": metadatas[i].get("document_id", "")
+                    })
+            return results
 
 class DocumentService:
     """Service layer handling document storage, content parsing, splitting, and vector indexing."""

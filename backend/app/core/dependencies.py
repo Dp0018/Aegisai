@@ -16,6 +16,7 @@ from app.repositories.audit import AuditLogRepository
 from app.repositories.document import DocumentRepository
 from app.services.auth import AuthService
 from app.services.document import DocumentService
+from app.services.rag import RAGService
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_PREFIX}/auth/token"
@@ -48,6 +49,12 @@ async def get_document_service(
 ) -> DocumentService:
     """Dependency producing DocumentService instance."""
     return DocumentService(doc_repo, audit_repo)
+
+async def get_rag_service(
+    doc_service: DocumentService = Depends(get_document_service)
+) -> RAGService:
+    """Dependency producing RAGService instance."""
+    return RAGService(doc_service)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
