@@ -1,10 +1,12 @@
 import uuid
+import re
 from typing import List, Optional, TypedDict
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.core.config import settings
 from app.services.rag import RAGService
+from app.services.tools import create_support_ticket, send_smtp_email
 
 class AgentState(TypedDict):
     """The State schema representing context data passing through the StateGraph."""
@@ -36,6 +38,7 @@ class AgentService:
         builder.add_node("research", self._research_node)
         builder.add_node("respond", self._respond_node)
         builder.add_node("escalate", self._escalate_node)
+        builder.add_node("email_dispatch", self._email_dispatch_node)
 
         # 2. Set entry point
         builder.set_entry_point("coordinator")
@@ -59,10 +62,12 @@ class AgentService:
             self._post_respond_route,
             {
                 "respond": "respond",
+                "email_dispatch": "email_dispatch",
                 "end": END
             }
         )
         builder.add_edge("escalate", END)
+        builder.add_edge("email_dispatch", END)
 
         # Compile with checkpointer and HITL interrupt on response draft review
         return builder.compile(checkpointer=self.checkpointer, interrupt_after=["respond"])
@@ -71,6 +76,8 @@ class AgentService:
         """Direct transition based on human feedback."""
         if state.get("approved") is False:
             return "respond"
+        elif state.get("approved") is True:
+            return "email_dispatch"
         return "end"
 
     async def _coordinator_node(self, state: AgentState) -> dict:
@@ -121,10 +128,27 @@ class AgentService:
         }
 
     async def _escalate_node(self, state: AgentState) -> dict:
-        """Handle support escalations."""
+        """Handle support escalations and trigger ticket creation tool."""
+        query = state["query"]
+        emails = re.findall(r'[\w\.-]+@[\w\.-]+', query)
+        email = emails[0] if emails else "escalated-customer@aegisai.com"
+
+        ticket = create_support_ticket(email=email, issue=query, priority="high")
         return {
             "escalated": True,
-            "response": "This request requires account/billing access. Escalated to support queue."
+            "response": f"This request requires account/billing access. Escalated to support queue. Support ticket created: {ticket['ticket_id']} (Priority: {ticket['priority']})."
+        }
+
+    async def _email_dispatch_node(self, state: AgentState) -> dict:
+        """Simulate SMTP dispatch once response has been approved by the operator."""
+        query = state["query"]
+        response = state["response"] or ""
+        emails = re.findall(r'[\w\.-]+@[\w\.-]+', query)
+        email = emails[0] if emails else "customer@aegisai.com"
+
+        send_smtp_email(to_email=email, subject="Response from AegisAI Support", body=response)
+        return {
+            "requires_approval": False
         }
 
     async def _generate_response(

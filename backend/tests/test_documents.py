@@ -26,7 +26,10 @@ async def clear_db():
         await conn.execute(text("TRUNCATE TABLE documents CASCADE;"))
         await conn.execute(text("TRUNCATE TABLE users CASCADE;"))
     await engine.dispose()
-    await redis_client.aclose()
+    try:
+        await redis_client.aclose()
+    except Exception:
+        pass
 
 @pytest.fixture(autouse=True)
 def clean_chroma():
@@ -174,6 +177,9 @@ def test_document_ingestion_lifecycle():
             assert len(md_chunks_after) == 0
             
             await engine.dispose()
-            await redis_client.aclose()
+            try:
+                await redis_client.aclose()
+            except Exception:
+                pass
 
     run_async(_test())

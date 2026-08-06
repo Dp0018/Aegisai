@@ -17,7 +17,10 @@ async def clear_db():
         await conn.execute(text("TRUNCATE TABLE audit_logs CASCADE;"))
         await conn.execute(text("TRUNCATE TABLE users CASCADE;"))
     await engine.dispose()
-    await redis_client.aclose()
+    try:
+        await redis_client.aclose()
+    except Exception:
+        pass
 
 def test_password_hashing():
     """Verify password hashing and verification functions work correctly."""
@@ -139,6 +142,9 @@ def test_auth_lifecycle():
             assert res_post_logout_test.status_code == 401
 
             await engine.dispose()
-            await redis_client.aclose()
+            try:
+                await redis_client.aclose()
+            except Exception:
+                pass
 
     run_async(_test())

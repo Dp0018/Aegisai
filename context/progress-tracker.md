@@ -12,14 +12,14 @@ This file records completed development blocks, active iterations, and outstandi
 - [x] Phase 2: Ingestion Pipeline
 - [x] Phase 3: RAG Retrieval
 - [x] Phase 4: LangGraph Coordinator Workflows
-- [ ] Phase 5: Execution Tools (Active)
-- [ ] Phase 6: Thread and Memory Layer
+- [x] Phase 5: Action Tools Integration
+- [ ] Phase 6: Thread and Memory Layer (Active)
 - [ ] Phase 7: React Frontend Dashboard
 
 ---
 
 ## Active Phase Details
 
-### Phase 5: Action Tools Integration
-- **Goal**: Add execution tool libraries including vector search lookup, database customer details queries, ticketing service integrations, and simulated SMTP/Email sending.
-- **Current Task**: Planning the execution tool abstraction layer and email simulator schemas.
+### Phase 6: Thread and Memory Layer
+- **Goal**: Implement `threads`, `messages`, `actions`, and `memory` database schemas, set up thread context builders to track conversation history, and write memory Summarizers to extract long-term user logs.
+- **Current Task**: Planning the conversation history schemas, foreign key mappings, and prompt text summarizers.
