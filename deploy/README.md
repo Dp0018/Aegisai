@@ -293,3 +293,4 @@ postgresql+asyncpg://[user]:[password]@[host]/neondb?ssl=require
 
 ### 4. Kafka errors on Koyeb / Render
 AegisAI has a built-in graceful fallback: if Apache Kafka is not present, the backend logs a connection notice and continues operating all REST and WebSocket agent loops without interruption.
+
