@@ -167,3 +167,89 @@ PYTHONPATH=. pytest
 4. **Chat & Stream:** Log in as your operator, go to **Chat Console**, ask a question, and observe the live reasoning telemetry traces and documents retrieved.
 5. **Human-in-the-Loop Review:** Approve or reject/revise response drafts. Check mock SMTP logs for output.
 6. **Observability Check:** Open `http://localhost:3100` (login: `admin` / `admin`) to monitor performance.
+
+---
+
+## 🌐 8. Production & Free Cloud Deployment Guide
+
+AegisAI can be deployed for **100% free** using a decoupled cloud architecture (Vercel for Frontend, Koyeb/Render for Backend, Neon for PostgreSQL, and Upstash for Redis) or self-hosted via Docker Compose.
+
+### Free Cloud Architecture Overview
+
+| Component | Free Cloud Provider | Key Configuration |
+| :--- | :--- | :--- |
+| **Frontend** | [Vercel](https://vercel.com) | Root: `frontend`, Next.js preset |
+| **Backend API** | [Koyeb](https://koyeb.com) or [Render](https://render.com) | Root: `backend`, Docker build, Port: `8000` |
+| **Relational Database** | [Neon](https://neon.tech) (0.5GB free) | Serverless PostgreSQL with `asyncpg` |
+| **Cache & Token Revocation** | [Upstash Redis](https://upstash.com) (10k cmd/day) | Standard Redis connection URI |
+| **Vector Index** | [Pinecone](https://pinecone.io) (100k vectors) | Cloud vector index with `text-embedding-3-large` |
+
+### Step 1: Provision Free Backing Databases
+
+1. **Neon PostgreSQL:**
+   * Create a project at [neon.tech](https://neon.tech) named `aegisai_db`.
+   * Copy the connection string and change the protocol to `postgresql+asyncpg://`:
+     ```text
+     postgresql+asyncpg://[user]:[password]@[host]/aegisai_db?ssl=require
+     ```
+2. **Upstash Redis:**
+   * Create a Redis database at [upstash.com](https://upstash.com).
+   * Copy the connection string (`rediss://default:[password]@[endpoint]:6379`).
+
+### Step 2: Deploy Backend to Koyeb (Zero Cold Starts) or Render
+
+1. Sign up at [koyeb.com](https://koyeb.com) (or [render.com](https://render.com)).
+2. Create a new Web Service and link your GitHub repository.
+3. Set build configuration:
+   * **Root Directory:** `backend`
+   * **Build Type:** `Dockerfile` (uses `backend/Dockerfile`)
+   * **Port:** `8000`
+4. Add the following Environment Variables in the provider dashboard:
+   ```env
+   DEBUG=False
+   API_PREFIX=/api/v1
+   DATABASE_URL=postgresql+asyncpg://[user]:[password]@[host]/aegisai_db?ssl=require
+   REDIS_URL=rediss://default:[password]@[endpoint]:6379
+   VECTOR_DB_PROVIDER=pinecone
+   PINECONE_API_KEY=your_pinecone_key
+   PINECONE_INDEX_NAME=aegisai-index
+   OPENAI_API_KEY=sk-your-openai-api-key
+   JWT_SECRET_KEY=your_secure_random_jwt_key
+   JWT_REFRESH_SECRET_KEY=your_secure_random_refresh_key
+   ```
+5. Deploy the service to obtain your public backend HTTPS URL (e.g. `https://aegisai-backend.koyeb.app`).
+
+### Step 3: Run Remote Migrations
+
+Run database migrations locally against your remote Neon database:
+```bash
+cd backend
+DATABASE_URL="postgresql+asyncpg://[user]:[password]@[host]/aegisai_db?ssl=require" alembic upgrade head
+```
+
+### Step 4: Deploy Frontend to Vercel
+
+1. Import your repository on [Vercel](https://vercel.com).
+2. Set **Root Directory** to `frontend`.
+3. Add Environment Variables:
+   * `NEXT_PUBLIC_API_URL=https://[your-backend-domain].koyeb.app/api/v1`
+   * `NEXT_PUBLIC_WS_URL=wss://[your-backend-domain].koyeb.app/api/v1`
+   * `NEXT_PUBLIC_OBSERVABILITY_URL=http://localhost:3100`
+4. Deploy the frontend and connect your production custom domain.
+
+---
+
+### Alternative: Self-Contained VPS Deployment (Docker Compose)
+
+For dedicated servers or virtual private servers (DigitalOcean, Hetzner, AWS EC2):
+
+1. Clone the repository and configure `backend/.env`.
+2. Start all services using the production compose file:
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d --build
+   ```
+3. Run migrations inside the backend container:
+   ```bash
+   docker exec -it aegisai-backend alembic upgrade head
+   ```
+4. Set up Caddy or Nginx reverse proxy with automated SSL for your domains.
