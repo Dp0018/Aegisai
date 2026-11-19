@@ -23,11 +23,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+    const observabilityUrl = process.env.NEXT_PUBLIC_OBSERVABILITY_URL || "http://localhost:3100";
+
     const baseNavigation = [
         { name: "Chat Console", href: "/dashboard/chat", icon: MessageSquare },
         { name: "Documents Ingestion", href: "/dashboard/documents", icon: FileText },
         { name: "Retrieval Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-        { name: "System Observability", href: "http://localhost:3100", icon: Activity, external: true },
+        { name: "System Observability", href: observabilityUrl, icon: Activity, external: true },
     ];
 
     const navigation = user?.role === "admin"
@@ -53,17 +55,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 }}
             />
 
-            {/* Glowing blur mesh effect behind main viewport */}
-            <div className="absolute top-1/3 right-1/4 h-[350px] w-[350px] rounded-full bg-primary/5 blur-[90px] dark:bg-primary/10" />
-
             {/* 1. Desktop Floating Sidebar (Hidden on Mobile) */}
             <aside className="relative z-20 hidden w-64 shrink-0 flex-col rounded-2xl border border-border/80 bg-card/60 shadow-xl backdrop-blur-xl transition-all duration-300 md:flex">
                 {/* Brand Header */}
                 <div className="flex h-16 items-center gap-3 border-b border-border/40 px-6">
                     <Logo className="h-9 w-9 shrink-0" />
                     <div className="flex flex-col">
-                        <span className="text-sm font-extrabold tracking-tight text-foreground leading-tight">Aether Control</span>
-                        <span className="text-[9px] uppercase font-bold tracking-wider text-primary/80">Operations Console</span>
+                        <span className="text-sm font-extrabold tracking-tight text-foreground leading-tight">AegisAI</span>
+                        <span className="text-[9px] uppercase font-bold tracking-wider text-primary/80">Enterprise Platform</span>
                     </div>
                 </div>
 
@@ -122,7 +121,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         <ThemeToggle />
                         <button
                             onClick={() => logout()}
-                            className="flex h-9 items-center justify-center gap-2 rounded-full border border-border bg-muted/40 px-4 text-xs font-bold text-foreground transition-all hover:bg-destructive hover:text-destructive-foreground active:scale-95"
+                            className="flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-muted/40 px-4 text-xs font-bold text-foreground transition-all hover:bg-destructive hover:text-destructive-foreground active:scale-95"
                         >
                             <LogOut className="h-3.5 w-3.5" />
                             Log Out
@@ -155,7 +154,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     {/* Cloud System telemetry metrics */}
                     <div className="flex items-center gap-4">
                         <div className="hidden items-center gap-1.5 rounded-lg border border-border/40 bg-background/30 px-2.5 py-1 font-mono text-[10px] text-muted-foreground md:flex">
-                            <Activity className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
+                            <Activity className="h-3.5 w-3.5 text-emerald-500" />
                             <span>LATENCY: <strong className="text-foreground">14ms</strong></span>
                         </div>
                         <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-background/30 px-2.5 py-1 font-mono text-[10px] text-muted-foreground">
@@ -196,8 +195,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         <div className="flex items-center gap-3 mb-8">
                             <Logo className="h-9 w-9 shrink-0" />
                             <div className="flex flex-col">
-                                <span className="text-sm font-extrabold tracking-tight text-foreground leading-tight">Aether Control</span>
-                                <span className="text-[9px] uppercase font-bold tracking-wider text-primary/80">Operations</span>
+                                <span className="text-sm font-extrabold tracking-tight text-foreground leading-tight">AegisAI</span>
+                                <span className="text-[9px] uppercase font-bold tracking-wider text-primary/80">Platform</span>
                             </div>
                         </div>
 
@@ -253,7 +252,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                                 <ThemeToggle />
                                 <button
                                     onClick={() => logout()}
-                                    className="flex h-9 items-center justify-center gap-2 rounded-full border border-border bg-muted px-4 text-xs font-bold text-foreground transition-all hover:bg-destructive hover:text-destructive-foreground active:scale-95"
+                                    className="flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-muted px-4 text-xs font-bold text-foreground transition-all hover:bg-destructive hover:text-destructive-foreground active:scale-95"
                                 >
                                     <LogOut className="h-3.5 w-3.5" />
                                     Log Out

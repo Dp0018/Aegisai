@@ -206,7 +206,7 @@ export function ChatWindow({ threadId }: ChatWindowProps) {
             {requiresApproval && (
                 <div className="border-t border-amber-500/30 bg-amber-500/5 p-4 space-y-4 backdrop-blur-md animate-fade-in">
                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <AlertTriangle className="h-4.5 w-4.5 shrink-0 animate-pulse" />
+                        <AlertTriangle className="h-4.5 w-4.5 shrink-0" />
                         <span className="text-xs font-extrabold uppercase tracking-wider">
                             Operator Action Required (Human-in-the-Loop)
                         </span>

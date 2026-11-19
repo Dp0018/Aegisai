@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || API_BASE_URL.replace(/^http/, "ws");
 
 function getWebSocketUrl(threadId: string): string {
-    const wsBase = API_BASE_URL.replace(/^http/, "ws");
-    return `${wsBase}/agent/ws/${threadId}`;
+    return `${WS_BASE_URL}/agent/ws/${threadId}`;
 }
 
 export function useWebSocket(

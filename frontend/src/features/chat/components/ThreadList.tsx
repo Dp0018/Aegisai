@@ -96,7 +96,7 @@ export function ThreadList({ selectedId, onSelect, onStartNew }: ThreadListProps
                                 </div>
                                 <div className="flex items-center gap-1.5 text-[9px] font-medium text-muted-foreground/80">
                                     <ShieldCheck className="h-3 w-3 text-emerald-500/80" />
-                                    <span className="truncate">Operator Node Secure</span>
+                                    <span className="truncate">Active Session</span>
                                 </div>
                             </button>
                         );

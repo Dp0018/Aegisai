@@ -34,11 +34,11 @@ export function LoginForm() {
         <div className="w-full max-w-md animate-fade-in p-6">
             <div className="space-y-6">
                 
-                {/* Node Status Indicator */}
+                {/* Status Indicator */}
                 <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-500/90">
-                        Node Authentication Gateway
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                        Authentication Service
                     </span>
                 </div>
 
@@ -48,7 +48,7 @@ export function LoginForm() {
                         Operator Sign In
                     </h1>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                        Provide credentials to unlock the Aether Control dashboard.
+                        Enter credentials to access the AegisAI platform.
                     </p>
                 </div>
 
@@ -111,14 +111,14 @@ export function LoginForm() {
                                 Authenticating...
                             </span>
                         ) : (
-                            "Establish Session"
+                            "Sign In"
                         )}
                     </Button>
 
                     <div className="text-center text-sm text-muted-foreground border-t border-border/40 pt-6 mt-6">
-                        New Operator Node?{" "}
+                        Need an account?{" "}
                         <Link href="/register" className="font-semibold text-primary hover:underline hover:text-primary/95">
-                            Register Profile
+                            Register
                         </Link>
                     </div>
                 </form>

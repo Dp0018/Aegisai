@@ -83,7 +83,7 @@ export default function UsersPage() {
                     Team Management
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                    Register platform operators, grant administration rights, and view coordinate identities.
+                    Register platform operators, grant administration rights, and view user profiles.
                 </p>
             </div>
 
@@ -94,7 +94,7 @@ export default function UsersPage() {
                     <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-sm shadow-sm space-y-4">
                         <h2 className="text-sm font-extrabold text-foreground flex items-center gap-2">
                             <Users className="h-4 w-4 text-primary" />
-                            Registered Coordinate Identities
+                            Registered Platform Users
                         </h2>
 
                         {isLoading && (
@@ -154,8 +154,8 @@ export default function UsersPage() {
                 {/* Right: Registration Form (1 col) */}
                 <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-sm shadow-sm space-y-4 h-fit">
                     <h2 className="text-sm font-extrabold text-foreground flex items-center gap-2">
-                        <UserPlus className="h-4 w-4 text-violet-500" />
-                        Add Coordinate Profile
+                        <UserPlus className="h-4 w-4 text-sky-500" />
+                        Add User Profile
                     </h2>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

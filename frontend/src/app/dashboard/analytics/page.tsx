@@ -8,7 +8,7 @@ import { listDocumentsRequest } from "@/features/documents/api/documents";
 import { 
     Search, Loader2, Database, FileText, 
     BarChart3, Layers, Cpu, ChevronRight, 
-    AlertCircle, Sparkles
+    AlertCircle
 } from "lucide-react";
 
 // Score to colour mapping helper
@@ -69,7 +69,7 @@ export default function AnalyticsPage() {
             {/* Page Header */}
             <div className="flex flex-col gap-1">
                 <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
-                    <Sparkles className="h-6 w-6 text-primary" />
+                    <BarChart3 className="h-6 w-6 text-primary" />
                     Retrieval Analytics
                 </h1>
                 <p className="text-sm text-muted-foreground">
@@ -81,9 +81,9 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {[
                     { label: "Indexed Documents", value: completedDocs.length, icon: Database, color: "text-primary" },
-                    { label: "Total Chunks", value: totalChunks, icon: Layers, color: "text-violet-500" },
+                    { label: "Total Chunks", value: totalChunks, icon: Layers, color: "text-sky-500" },
                     { label: "Vector Index", value: "ChromaDB", icon: Cpu, color: "text-cyan-500" },
-                    { label: "Retrieved (last)", value: searched ? results.length : "—", icon: BarChart3, color: "text-emerald-500" },
+                    { label: "Retrieved (last)", value: searched ? results.length : "-", icon: BarChart3, color: "text-emerald-500" },
                 ].map((stat) => (
                     <div key={stat.label} className="rounded-2xl border border-border/80 bg-card/60 p-4 backdrop-blur-sm shadow-sm flex items-center gap-3">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60 ${stat.color}`}>
@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
                 {/* Right: Document Index Coverage (1 col) */}
                 <div className="rounded-2xl border border-border/80 bg-card/60 p-5 backdrop-blur-sm shadow-sm h-fit space-y-4">
                     <h2 className="text-sm font-extrabold text-foreground flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-violet-500" />
+                        <Layers className="h-4 w-4 text-sky-500" />
                         Knowledge Index
                     </h2>
 

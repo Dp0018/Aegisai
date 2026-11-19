@@ -11,18 +11,18 @@ export function Logo({ className = "h-10 w-10" }: { className?: string }) {
             xmlns="http://www.w3.org/2000/svg"
         >
             <defs>
-                {/* Custom linear gradients for each ring */}
+                {/* Clean enterprise blue / cyan gradients */}
                 <linearGradient id="logoipsum-ring-1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="var(--primary, #3b82f6)" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
+                    <stop offset="0%" stopColor="#2563eb" />
+                    <stop offset="100%" stopColor="#0ea5e9" />
                 </linearGradient>
                 <linearGradient id="logoipsum-ring-2" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#d946ef" />
+                    <stop offset="0%" stopColor="#0284c7" />
+                    <stop offset="100%" stopColor="#06b6d4" />
                 </linearGradient>
                 <linearGradient id="logoipsum-ring-3" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#f43f5e" />
-                    <stop offset="100%" stopColor="#ec4899" />
+                    <stop offset="0%" stopColor="#0f766e" />
+                    <stop offset="100%" stopColor="#0284c7" />
                 </linearGradient>
             </defs>
 

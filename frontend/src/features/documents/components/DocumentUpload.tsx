@@ -146,7 +146,7 @@ export function DocumentUpload() {
                             accept=".pdf,.docx,.txt,.md"
                             className="hidden"
                         />
-                        <div className="rounded-full bg-muted/60 p-3.5 transition-colors group-hover:bg-primary/10">
+                        <div className="rounded-xl bg-muted/60 p-3.5 transition-colors group-hover:bg-primary/10">
                             <UploadCloud className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
                         </div>
                         <p className="mt-4 text-sm font-semibold text-foreground">

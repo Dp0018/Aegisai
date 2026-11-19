@@ -58,35 +58,35 @@ export function DocumentList() {
         switch (status) {
             case "completed":
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">
                         <CheckCircle className="h-3.5 w-3.5" />
                         Completed
                     </span>
                 );
             case "processing":
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-500 animate-pulse">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-500">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         Processing
                     </span>
                 );
             case "pending":
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/20 bg-yellow-500/10 px-2.5 py-0.5 text-xs font-semibold text-yellow-500">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2.5 py-0.5 text-xs font-semibold text-yellow-500">
                         <Clock className="h-3.5 w-3.5" />
                         Queued
                     </span>
                 );
             case "failed":
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         Failed
                     </span>
                 );
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
                         Unknown
                     </span>
                 );

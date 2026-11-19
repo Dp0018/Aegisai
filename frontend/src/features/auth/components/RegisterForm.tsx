@@ -47,21 +47,21 @@ export function RegisterForm() {
         <div className="w-full max-w-md animate-fade-in p-6">
             <div className="space-y-6">
                 
-                {/* Node Status Indicator */}
+                {/* Status Indicator */}
                 <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-500/90">
-                        IAM Registration Gateway
+                    <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                        Account Registration
                     </span>
                 </div>
 
                 {/* Left-Aligned Header with brand accent line */}
                 <div className="relative border-l-2 border-primary pl-4 space-y-1">
                     <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-                        Create Profile
+                        Create Account
                     </h1>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                        Register a new coordinate identity (First user becomes ADMIN).
+                        Register a new user profile (first user receives administrator rights).
                     </p>
                 </div>
 
@@ -158,17 +158,17 @@ export function RegisterForm() {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                Deploying Node...
+                                Authenticating...
                             </span>
                         ) : (
-                            "Deploy Operator Node"
+                            "Create Account"
                         )}
                     </Button>
 
                     <div className="text-center text-sm text-muted-foreground border-t border-border/40 pt-6 mt-6">
-                        Already Registered?{" "}
+                        Already have an account?{" "}
                         <Link href="/login" className="font-semibold text-primary hover:underline hover:text-primary/95">
-                            Establish Session
+                            Sign In
                         </Link>
                     </div>
                 </form>

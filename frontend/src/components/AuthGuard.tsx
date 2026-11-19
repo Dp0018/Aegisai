@@ -11,13 +11,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!isLoading) {
-            const isPublicRoute = pathname === "/login" || pathname === "/register";
-            if (!user && !isPublicRoute) {
+            const isAuthRoute = pathname === "/login" || pathname === "/register";
+            const isPublicRoute = pathname === "/" || pathname === "/terms" || pathname?.startsWith("/terms");
+            if (!user && !isAuthRoute && !isPublicRoute) {
                 router.replace("/login");
             } else if (user && pathname === "/login") {
-                router.replace("/");
+                router.replace("/dashboard/chat");
             } else if (user && pathname === "/register" && user.role !== "admin") {
-                router.replace("/");
+                router.replace("/dashboard/chat");
             }
         }
     }, [user, isLoading, pathname, router]);
@@ -36,12 +37,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         );
     }
 
-    const isPublicRoute = pathname === "/login" || pathname === "/register";
+    const isAuthRoute = pathname === "/login" || pathname === "/register";
+    const isPublicRoute = pathname === "/" || pathname === "/terms" || pathname?.startsWith("/terms");
     const allowAdminRegister = user && pathname === "/register" && user.role === "admin";
     
     // Prevent screen flashing of guarded content
-    if (!user && !isPublicRoute) return null;
-    if (user && isPublicRoute && !allowAdminRegister) return null;
+    if (!user && !isAuthRoute && !isPublicRoute) return null;
+    if (user && isAuthRoute && !allowAdminRegister) return null;
 
     return <>{children}</>;
 }

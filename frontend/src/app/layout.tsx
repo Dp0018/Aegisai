@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aether Control",
-  description: "Enterprise operator-in-the-loop support agent dashboard.",
+  title: "AegisAI - Enterprise GenAI Platform",
+  description: "Multi-agent orchestration, vector retrieval, and real-time operator governance.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
