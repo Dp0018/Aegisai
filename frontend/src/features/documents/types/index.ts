@@ -7,6 +7,7 @@ export interface DocumentResponse {
     file_size: number;
     status: DocumentStatus;
     chunks_count: number | null;
+    error_message: string | null;
     error_log: string | null;
     created_at: string;
     updated_at: string;

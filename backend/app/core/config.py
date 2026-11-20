@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     # OpenAI Settings
     OPENAI_API_KEY: str = "dummy_key_replace_in_env"
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"
+    OPENAI_EMBEDDING_DIMENSION: int = 3072
 
     # JWT Security Secrets (Defaults for local development)
     JWT_SECRET_KEY: str = "super_secure_jwt_access_secret_key_change_me_in_production_9f2a71"

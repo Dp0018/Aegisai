@@ -197,9 +197,10 @@ export function DocumentList() {
                                 </div>
 
                                 {/* Error Log Display */}
-                                {doc.status === "failed" && doc.error_log && (
-                                    <div className="w-full text-xs bg-destructive/5 text-destructive p-3 rounded-lg border border-destructive/15 mt-1">
-                                        <strong>Ingestion Error:</strong> {doc.error_log}
+                                {doc.status === "failed" && (doc.error_message || doc.error_log) && (
+                                    <div className="w-full text-xs bg-destructive/10 text-destructive p-3 rounded-lg border border-destructive/20 mt-1">
+                                        <strong className="block font-bold mb-0.5">Ingestion Error:</strong>
+                                        <span className="font-mono text-[11px] break-all">{doc.error_message || doc.error_log}</span>
                                     </div>
                                 )}
                             </div>

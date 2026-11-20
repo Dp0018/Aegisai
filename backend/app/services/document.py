@@ -12,8 +12,8 @@ from app.repositories.audit import AuditLogRepository
 
 class MockEmbeddingFunction(EmbeddingFunction):
     """Deterministic local mock embedding function for sandboxed testing."""
-    def __init__(self) -> None:
-        pass
+    def __init__(self, dimension: int = 3072) -> None:
+        self.dimension = dimension
 
     def name(self) -> str:
         return "mock"
@@ -22,7 +22,7 @@ class MockEmbeddingFunction(EmbeddingFunction):
         embeddings = []
         for text in input:
             val = float(len(text) % 100) / 100.0
-            embeddings.append([val] * 3072)
+            embeddings.append([val] * self.dimension)
         return embeddings
 
 class RecursiveCharacterTextSplitter:
@@ -79,10 +79,17 @@ class VectorStoreAdapter:
 
         if self.provider == "pinecone":
             if settings.PINECONE_API_KEY and settings.PINECONE_API_KEY != "dummy_pinecone_key":
-                from pinecone import Pinecone
-                self.pc = Pinecone(api_key=settings.PINECONE_API_KEY)
-                self.index = self.pc.Index(settings.PINECONE_INDEX_NAME)
-                self.is_mock = False
+                try:
+                    from pinecone import Pinecone
+                    self.pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+                    self.index = self.pc.Index(settings.PINECONE_INDEX_NAME)
+                    self.is_mock = False
+                except Exception as e:
+                    import logging
+                    logging.getLogger("aegisai.vector").warning(
+                        f"Failed to initialize Pinecone index '{settings.PINECONE_INDEX_NAME}': {e}. Falling back to mock."
+                    )
+                    self.is_mock = True
             else:
                 self.is_mock = True
         else:
@@ -102,6 +109,22 @@ class VectorStoreAdapter:
         
         if self.provider == "pinecone":
             if not self.is_mock:
+                # Pre-validate dimension to give actionable diagnostic if index dimension differs
+                try:
+                    stats = self.index.describe_index_stats()
+                    target_dim = stats.get("dimension") if isinstance(stats, dict) else getattr(stats, "dimension", None)
+                    if target_dim and len(embeddings) > 0 and len(embeddings[0]) != target_dim:
+                        raise ValueError(
+                            f"Dimension mismatch: Pinecone index '{settings.PINECONE_INDEX_NAME}' expects {target_dim} dimensions, "
+                            f"but embedding model generated {len(embeddings[0])} dimensions. "
+                            f"Set OPENAI_EMBEDDING_DIMENSION={target_dim} in your environment variables or create a Pinecone index with {len(embeddings[0])} dimensions."
+                        )
+                except Exception as check_err:
+                    if "Dimension mismatch" in str(check_err):
+                        raise
+                    # Ignore networking warnings during describe_index_stats
+                    pass
+
                 vectors = [
                     {
                         "id": f"{document_id}_{i}",
@@ -143,6 +166,7 @@ class VectorStoreAdapter:
             ]
             self.collection.add(
                 ids=ids,
+                embeddings=embeddings,
                 documents=chunks,
                 metadatas=metadatas
             )
@@ -285,9 +309,10 @@ class DocumentService:
         if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "dummy_key_replace_in_env":
             return OpenAIEmbeddingFunction(
                 api_key=settings.OPENAI_API_KEY,
-                model_name="text-embedding-3-large"
+                model_name=settings.OPENAI_EMBEDDING_MODEL,
+                dimensions=settings.OPENAI_EMBEDDING_DIMENSION
             )
-        return MockEmbeddingFunction()
+        return MockEmbeddingFunction(dimension=settings.OPENAI_EMBEDDING_DIMENSION)
 
     def _parse_file(self, file_path: str, content_type: str) -> str:
         """Extract text from file depending on content type (PDF, DOCX, or text/MD)."""
@@ -330,46 +355,60 @@ class DocumentService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
     ) -> None:
-        """Parse, segment, and index document chunks asynchronously."""
-        document = await self.document_repo.update_status(document_id, DocumentStatus.PROCESSING)
-        if not document:
-            return
+        """Parse, segment, and index document chunks asynchronously with dedicated DB session."""
+        import logging
+        from app.db.session import AsyncSessionLocal
 
-        try:
-            # 1. Parse content
-            text = self._parse_file(file_path, document.content_type)
-            if not text.strip():
-                raise ValueError("Extracted text is empty")
+        logger = logging.getLogger("aegisai.document")
 
-            # 2. Chunk content
-            splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-            chunks = splitter.split_text(text)
+        async with AsyncSessionLocal() as session:
+            doc_repo = DocumentRepository(session)
+            audit_repo = AuditLogRepository(session)
 
-            # 3. Add to Vector Store
-            self.vector_store.add_document(document_id, document.filename, chunks)
+            document = await doc_repo.update_status(document_id, DocumentStatus.PROCESSING)
+            if not document:
+                logger.warning(f"Document {document_id} not found during processing startup")
+                return
 
-            # 4. Mark Complete
-            await self.document_repo.update_status(document_id, DocumentStatus.COMPLETED)
-            
-            await self.audit_repo.create(
-                user_id=None,
-                action="document_processed",
-                ip_address=ip_address,
-                user_agent=user_agent,
-                payload={"document_id": str(document_id), "filename": document.filename, "chunks_count": len(chunks)}
-            )
+            try:
+                # 1. Parse content
+                text = self._parse_file(file_path, document.content_type)
+                if not text or not text.strip():
+                    raise ValueError("Extracted text is empty or document format could not be parsed.")
 
-        except Exception as e:
-            error_msg = str(e)[:1000]
-            await self.document_repo.update_status(document_id, DocumentStatus.FAILED, error_message=error_msg)
-            
-            await self.audit_repo.create(
-                user_id=None,
-                action="document_processing_failed",
-                ip_address=ip_address,
-                user_agent=user_agent,
-                payload={"document_id": str(document_id), "filename": document.filename, "error": error_msg}
-            )
+                # 2. Chunk content
+                splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                chunks = splitter.split_text(text)
+                if not chunks:
+                    raise ValueError("Document produced zero text chunks.")
+
+                # 3. Add to Vector Store
+                self.vector_store.add_document(document_id, document.filename, chunks)
+
+                # 4. Mark Complete
+                await doc_repo.update_status(document_id, DocumentStatus.COMPLETED)
+                
+                await audit_repo.create(
+                    user_id=None,
+                    action="document_processed",
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    payload={"document_id": str(document_id), "filename": document.filename, "chunks_count": len(chunks)}
+                )
+                logger.info(f"Successfully processed document {document_id} ({document.filename}): {len(chunks)} chunks indexed.")
+
+            except Exception as e:
+                logger.exception(f"Failed to process document {document_id} ({document.filename}): {e}")
+                error_msg = f"{type(e).__name__}: {str(e)}"[:1000]
+                await doc_repo.update_status(document_id, DocumentStatus.FAILED, error_message=error_msg)
+                
+                await audit_repo.create(
+                    user_id=None,
+                    action="document_processing_failed",
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    payload={"document_id": str(document_id), "filename": document.filename, "error": error_msg}
+                )
 
     async def delete_document(
         self,
