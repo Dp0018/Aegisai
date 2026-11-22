@@ -41,7 +41,7 @@ async def execute_agent_workflow(
 ):
     """Start or run the LangGraph workflow on a customer query session, persisting messages."""
     # 1. Resolve or create SQL thread
-    await thread_repo.get_or_create_thread(payload.thread_id)
+    await thread_repo.get_or_create_thread(payload.thread_id, user_id=current_user.id)
     
     # 2. Persist client query message
     await thread_repo.create_message(payload.thread_id, "user", payload.query)
@@ -51,6 +51,7 @@ async def execute_agent_workflow(
     initial_state = {
         "query": payload.query,
         "thread_id": payload.thread_id,
+        "user_id": current_user.id,
         "context_chunks": [],
         "response": None,
         "escalated": False,
@@ -200,8 +201,8 @@ async def list_all_operator_threads(
     current_user: User = Depends(get_operator_user),
     thread_repo: ThreadRepository = Depends(get_thread_repository)
 ):
-    """Retrieve metadata for all conversation threads."""
-    return await thread_repo.list_all_threads()
+    """Retrieve metadata for conversation threads belonging to current operator."""
+    return await thread_repo.list_all_threads(user_id=current_user.id)
 
 from fastapi import WebSocket, WebSocketDisconnect
 from app.core.websocket import manager

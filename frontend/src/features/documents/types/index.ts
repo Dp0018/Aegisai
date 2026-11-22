@@ -2,6 +2,7 @@ export type DocumentStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface DocumentResponse {
     id: string;
+    user_id?: string | null;
     filename: string;
     content_type: string;
     file_size: number;

@@ -26,7 +26,8 @@ async def retrieve_rag_context(
     results = await rag_service.retrieve_context(
         query=payload.query,
         top_k=payload.top_k,
-        document_ids=payload.document_ids
+        document_ids=payload.document_ids,
+        user_id=current_user.id
     )
     return results
 
@@ -46,7 +47,8 @@ async def query_rag_grounded_prompt(
     results = await rag_service.retrieve_context(
         query=payload.query,
         top_k=payload.top_k,
-        document_ids=payload.document_ids
+        document_ids=payload.document_ids,
+        user_id=current_user.id
     )
     prompt = rag_service.build_grounded_prompt(
         query=payload.query,

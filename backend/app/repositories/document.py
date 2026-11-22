@@ -16,19 +16,29 @@ class DocumentRepository:
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def list_all(self) -> List[Document]:
-        """List all document metadata records ordered by creation time descending."""
-        query = select(Document).order_by(Document.created_at.desc())
+    async def list_all(self, user_id: Optional[uuid.UUID] = None) -> List[Document]:
+        """List all document metadata records ordered by creation time descending, optionally filtered by user_id."""
+        query = select(Document)
+        if user_id:
+            query = query.where(Document.user_id == user_id)
+        query = query.order_by(Document.created_at.desc())
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def create(self, filename: str, content_type: str, file_size: int) -> Document:
+    async def create(
+        self,
+        filename: str,
+        content_type: str,
+        file_size: int,
+        user_id: Optional[uuid.UUID] = None
+    ) -> Document:
         """Create and persist a new Document metadata record in the database."""
         document = Document(
             filename=filename,
             content_type=content_type,
             file_size=file_size,
-            status=DocumentStatus.PENDING
+            status=DocumentStatus.PENDING,
+            user_id=user_id
         )
         self.db.add(document)
         await self.db.commit()

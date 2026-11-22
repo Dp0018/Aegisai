@@ -101,12 +101,19 @@ class VectorStoreAdapter:
                 embedding_function=self.embedding_function
             )
 
-    def add_document(self, document_id: uuid.UUID, filename: str, chunks: List[str]) -> None:
+    def add_document(
+        self,
+        document_id: uuid.UUID,
+        filename: str,
+        chunks: List[str],
+        user_id: Optional[uuid.UUID] = None
+    ) -> None:
         """Upsert text chunks and metadata to the configured vector store."""
         embeddings = self.embedding_function(chunks)
         # Convert to native Python floats to avoid serialization issues (e.g. numpy.float32) in Pinecone
         embeddings = [[float(x) for x in emb] for emb in embeddings]
         
+        user_id_str = str(user_id) if user_id else ""
         if self.provider == "pinecone":
             if not self.is_mock:
                 # Pre-validate dimension to give actionable diagnostic if index dimension differs
@@ -131,6 +138,7 @@ class VectorStoreAdapter:
                         "values": embeddings[i],
                         "metadata": {
                             "document_id": str(document_id),
+                            "user_id": user_id_str,
                             "chunk_index": i,
                             "filename": filename,
                             "text": chunks[i]
@@ -149,7 +157,7 @@ class VectorStoreAdapter:
                     {
                         "id": f"{document_id}_{i}",
                         "text": chunks[i],
-                        "metadata": {"filename": filename, "chunk_index": i}
+                        "metadata": {"filename": filename, "chunk_index": i, "user_id": user_id_str}
                     }
                     for i in range(len(chunks))
                 ]
@@ -159,6 +167,7 @@ class VectorStoreAdapter:
             metadatas = [
                 {
                     "document_id": str(document_id),
+                    "user_id": user_id_str,
                     "chunk_index": i,
                     "filename": filename
                 }
@@ -202,9 +211,12 @@ class VectorStoreAdapter:
         self,
         query_text: str,
         top_k: int = 5,
-        document_ids: Optional[List[uuid.UUID]] = None
+        document_ids: Optional[List[uuid.UUID]] = None,
+        user_id: Optional[uuid.UUID] = None
     ) -> List[dict]:
-        """Perform similarity queries returning matches (text, filename, score, document_id)."""
+        """Perform similarity queries returning matches (text, filename, score, document_id) filtered by user_id."""
+        user_id_str = str(user_id) if user_id else None
+
         if self.provider == "pinecone":
             embeddings = self.embedding_function([query_text])
             # Convert to native Python floats to avoid serialization issues (e.g. numpy.float32) in Pinecone
@@ -214,6 +226,8 @@ class VectorStoreAdapter:
                 filter_dict = {}
                 if document_ids:
                     filter_dict["document_id"] = {"$in": [str(d) for d in document_ids]}
+                if user_id_str:
+                    filter_dict["user_id"] = user_id_str
                 
                 res = self.index.query(
                     vector=query_vector,
@@ -239,6 +253,9 @@ class VectorStoreAdapter:
                     if document_ids and doc_id not in [str(d) for d in document_ids]:
                         continue
                     for chunk in chunks:
+                        chunk_uid = chunk.get("metadata", {}).get("user_id")
+                        if user_id_str and chunk_uid and chunk_uid != user_id_str:
+                            continue
                         all_chunks.append(chunk)
                 
                 query_words = set(query_text.lower().split())
@@ -259,12 +276,20 @@ class VectorStoreAdapter:
                 return scored_chunks[:top_k]
         else:
             # ChromaDB
-            where_clause = None
+            where_filters = []
             if document_ids:
                 if len(document_ids) == 1:
-                    where_clause = {"document_id": str(document_ids[0])}
+                    where_filters.append({"document_id": str(document_ids[0])})
                 else:
-                    where_clause = {"document_id": {"$in": [str(d) for d in document_ids]}}
+                    where_filters.append({"document_id": {"$in": [str(d) for d in document_ids]}})
+            if user_id_str:
+                where_filters.append({"user_id": user_id_str})
+
+            where_clause = None
+            if len(where_filters) == 1:
+                where_clause = where_filters[0]
+            elif len(where_filters) > 1:
+                where_clause = {"$and": where_filters}
                     
             res = self.collection.query(
                 query_texts=[query_text],
@@ -383,7 +408,7 @@ class DocumentService:
                     raise ValueError("Document produced zero text chunks.")
 
                 # 3. Add to Vector Store
-                self.vector_store.add_document(document_id, document.filename, chunks)
+                self.vector_store.add_document(document_id, document.filename, chunks, user_id=document.user_id)
 
                 # 4. Mark Complete
                 await doc_repo.update_status(document_id, DocumentStatus.COMPLETED)

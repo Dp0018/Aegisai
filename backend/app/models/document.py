@@ -1,6 +1,8 @@
 import enum
+import uuid
 from typing import Optional
-from sqlalchemy import String, Enum, Integer
+from sqlalchemy import String, Enum, Integer, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base
 
@@ -14,6 +16,12 @@ class Document(Base):
     """Document database model representing ingested knowledge documents."""
     __tablename__ = "documents"
 
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
     filename: Mapped[str] = mapped_column(
         String(255),
         nullable=False,

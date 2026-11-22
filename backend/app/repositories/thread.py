@@ -108,9 +108,11 @@ class ThreadRepository:
         )
         return list(result.scalars().all())
 
-    async def list_all_threads(self) -> List[Thread]:
-        """Fetch all conversation threads sorted by updated_at descending."""
-        result = await self.db.execute(
-            select(Thread).order_by(Thread.updated_at.desc())
-        )
+    async def list_all_threads(self, user_id: Optional[uuid.UUID] = None) -> List[Thread]:
+        """Fetch conversation threads sorted by updated_at descending, optionally filtered by user_id."""
+        query = select(Thread)
+        if user_id:
+            query = query.where(Thread.user_id == user_id)
+        query = query.order_by(Thread.updated_at.desc())
+        result = await self.db.execute(query)
         return list(result.scalars().all())

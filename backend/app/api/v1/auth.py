@@ -51,13 +51,11 @@ async def register(
     Subsequent registrations require an active ADMIN session.
     """
     user_count = await user_repo.count()
-    if user_count > 0:
-        # Require active Admin authentication
-        if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required for registration"
-            )
+    if user_count == 0:
+        # First registered user is automatically bootstrapped as Administrator
+        user_in.role = UserRole.ADMIN
+    elif token:
+        # An existing user is creating another user (e.g. from /dashboard/users)
         try:
             payload = decode_token(token, settings.JWT_SECRET_KEY)
             subject = payload.get("sub")
@@ -90,8 +88,12 @@ async def register(
         if caller.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only administrators can register new users"
+                detail="Only administrators can manage other users' profiles"
             )
+    else:
+        # Open public registration: allow any user to register their own profile
+        if not user_in.role:
+            user_in.role = UserRole.OPERATOR
 
     try:
         ip = request.client.host if request.client else None

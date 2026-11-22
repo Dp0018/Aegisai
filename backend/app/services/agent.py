@@ -13,6 +13,7 @@ class AgentState(TypedDict):
     """The State schema representing context data passing through the StateGraph."""
     query: str
     thread_id: uuid.UUID
+    user_id: Optional[uuid.UUID]
     context_chunks: List[dict]
     response: Optional[str]
     escalated: bool
@@ -110,7 +111,11 @@ class AgentService:
             }
         )
         
-        chunks = await self.rag_service.retrieve_context(query, top_k=5)
+        chunks = await self.rag_service.retrieve_context(
+            query,
+            top_k=5,
+            user_id=state.get("user_id")
+        )
         
         # Log telemetry action for research results observation
         observation_text = f"Retrieved {len(chunks)} relevant chunks."

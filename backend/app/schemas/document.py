@@ -9,6 +9,7 @@ class DocumentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    user_id: Optional[uuid.UUID] = None
     filename: str
     content_type: str
     file_size: int

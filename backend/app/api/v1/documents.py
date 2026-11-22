@@ -54,7 +54,8 @@ async def upload_document(
     db_doc = await doc_repo.create(
         filename=file.filename or "unnamed_document",
         content_type=file.content_type,
-        file_size=0  # will update after saving
+        file_size=0,  # will update after saving
+        user_id=current_user.id
     )
 
     # 2. Save file on disk
@@ -101,8 +102,8 @@ async def list_documents(
     current_user: User = Depends(get_operator_user),
     doc_repo: DocumentRepository = Depends(get_document_repository)
 ):
-    """Retrieve metadata for all ingested documents."""
-    return await doc_repo.list_all()
+    """Retrieve metadata for documents uploaded by the authenticated user."""
+    return await doc_repo.list_all(user_id=current_user.id)
 
 @router.get(
     "/{document_id}",
@@ -119,7 +120,7 @@ async def get_document_status(
 ):
     """Retrieve detailed processing status and metadata for a single document."""
     db_doc = await doc_repo.get_by_id(document_id)
-    if not db_doc:
+    if not db_doc or (db_doc.user_id and db_doc.user_id != current_user.id and current_user.role != "admin"):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found"
@@ -140,7 +141,14 @@ async def delete_document(
     current_user: User = Depends(get_operator_user),
     doc_service: DocumentService = Depends(get_document_service)
 ):
-    """Remove a document from database metadata, disk storage, and ChromaDB vector index."""
+    """Remove a document from database metadata, disk storage, and vector index."""
+    existing_doc = await doc_service.document_repo.get_by_id(document_id)
+    if not existing_doc or (existing_doc.user_id and existing_doc.user_id != current_user.id and current_user.role != "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found"
+        )
+
     ip = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
     

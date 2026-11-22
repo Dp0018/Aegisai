@@ -12,13 +12,15 @@ class RAGService:
         self,
         query: str,
         top_k: int = 5,
-        document_ids: Optional[List[uuid.UUID]] = None
+        document_ids: Optional[List[uuid.UUID]] = None,
+        user_id: Optional[uuid.UUID] = None
     ) -> List[dict]:
         """Perform similarity search on the vector database adapter for query context."""
         return self.doc_service.vector_store.query_similarity(
             query_text=query,
             top_k=top_k,
-            document_ids=document_ids
+            document_ids=document_ids,
+            user_id=user_id
         )
 
     def build_grounded_prompt(self, query: str, context_chunks: List[dict]) -> str:
