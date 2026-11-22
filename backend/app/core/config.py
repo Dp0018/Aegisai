@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     CHROMA_DB_DIR: str = "storage/chromadb"
 
     # Vector DB Config (ChromaDB or Pinecone)
-    VECTOR_DB_PROVIDER: str = "pinecone"
+    VECTOR_DB_PROVIDER: str = "chroma"
     PINECONE_API_KEY: str = "dummy_pinecone_key"
     PINECONE_INDEX_NAME: str = "aegisai-index"
 

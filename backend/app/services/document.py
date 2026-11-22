@@ -73,33 +73,18 @@ class VectorStoreAdapter:
     mock_store = {}  # Shared class dictionary fallback for mock Pinecone tests
 
     def __init__(self, provider: str, embedding_function: EmbeddingFunction):
-        self.provider = provider
+        # Hardcode ChromaDB as the active vector store, ignoring external env configs
+        self.provider = "chroma"
         self.embedding_function = embedding_function
         self.is_mock = False
 
-        if self.provider == "pinecone":
-            if settings.PINECONE_API_KEY and settings.PINECONE_API_KEY != "dummy_pinecone_key":
-                try:
-                    from pinecone import Pinecone
-                    self.pc = Pinecone(api_key=settings.PINECONE_API_KEY)
-                    self.index = self.pc.Index(settings.PINECONE_INDEX_NAME)
-                    self.is_mock = False
-                except Exception as e:
-                    import logging
-                    logging.getLogger("aegisai.vector").warning(
-                        f"Failed to initialize Pinecone index '{settings.PINECONE_INDEX_NAME}': {e}. Falling back to mock."
-                    )
-                    self.is_mock = True
-            else:
-                self.is_mock = True
-        else:
-            # Fallback to local ChromaDB
-            os.makedirs(settings.CHROMA_DB_DIR, exist_ok=True)
-            self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
-            self.collection = self.chroma_client.get_or_create_collection(
-                name="documents",
-                embedding_function=self.embedding_function
-            )
+        # Initialize local persistent ChromaDB
+        os.makedirs(settings.CHROMA_DB_DIR, exist_ok=True)
+        self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
+        self.collection = self.chroma_client.get_or_create_collection(
+            name="documents",
+            embedding_function=self.embedding_function
+        )
 
     def add_document(
         self,
@@ -323,9 +308,9 @@ class DocumentService:
         # Ensure upload directory exists
         os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
         
-        # Initialize the vector store adapter
+        # Initialize the vector store adapter (hardcoded to ChromaDB)
         self.vector_store = VectorStoreAdapter(
-            provider=settings.VECTOR_DB_PROVIDER,
+            provider="chroma",
             embedding_function=self._get_embedding_function()
         )
 

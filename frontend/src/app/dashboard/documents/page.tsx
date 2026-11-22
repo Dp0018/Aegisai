@@ -13,7 +13,7 @@ export default function DocumentsPage() {
                     Knowledge Base Ingestion
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                    Upload documents to split, parse, embed, and store into the Pinecone vector database index.
+                    Upload documents to split, parse, embed, and store into the Chroma vector database index.
                 </p>
             </div>
 

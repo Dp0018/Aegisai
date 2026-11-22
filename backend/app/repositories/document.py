@@ -41,17 +41,32 @@ class DocumentRepository:
         user_id: Optional[uuid.UUID] = None
     ) -> Document:
         """Create and persist a new Document metadata record in the database."""
-        document = Document(
-            filename=filename,
-            content_type=content_type,
-            file_size=file_size,
-            status=DocumentStatus.PENDING,
-            user_id=user_id
-        )
-        self.db.add(document)
-        await self.db.commit()
-        await self.db.refresh(document)
-        return document
+        try:
+            document = Document(
+                filename=filename,
+                content_type=content_type,
+                file_size=file_size,
+                status=DocumentStatus.PENDING,
+                user_id=user_id
+            )
+            self.db.add(document)
+            await self.db.commit()
+            await self.db.refresh(document)
+            return document
+        except Exception as e:
+            if "user_id" in str(e).lower() or "undefinedcolumn" in str(e).lower():
+                await self.db.rollback()
+                document = Document(
+                    filename=filename,
+                    content_type=content_type,
+                    file_size=file_size,
+                    status=DocumentStatus.PENDING
+                )
+                self.db.add(document)
+                await self.db.commit()
+                await self.db.refresh(document)
+                return document
+            raise
 
     async def update_status(
         self,
