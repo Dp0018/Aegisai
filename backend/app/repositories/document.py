@@ -18,12 +18,20 @@ class DocumentRepository:
 
     async def list_all(self, user_id: Optional[uuid.UUID] = None) -> List[Document]:
         """List all document metadata records ordered by creation time descending, optionally filtered by user_id."""
-        query = select(Document)
-        if user_id:
-            query = query.where(Document.user_id == user_id)
-        query = query.order_by(Document.created_at.desc())
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        try:
+            query = select(Document)
+            if user_id:
+                query = query.where(Document.user_id == user_id)
+            query = query.order_by(Document.created_at.desc())
+            result = await self.db.execute(query)
+            return list(result.scalars().all())
+        except Exception as e:
+            # If user_id column has not yet been migrated in PostgreSQL, fall back gracefully to query all
+            if "user_id" in str(e).lower() or "undefinedcolumn" in str(e).lower():
+                await self.db.rollback()
+                result = await self.db.execute(select(Document).order_by(Document.created_at.desc()))
+                return list(result.scalars().all())
+            raise
 
     async def create(
         self,

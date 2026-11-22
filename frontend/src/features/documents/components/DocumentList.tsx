@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listDocumentsRequest, deleteDocumentRequest } from "../api/documents";
 import { toast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
     FileText, 
@@ -20,7 +21,7 @@ export function DocumentList() {
     const queryClient = useQueryClient();
 
     // Fetch documents, poll every 5s to update background processing status automatically
-    const { data: documents, isLoading, error } = useQuery({
+    const { data: documents, isLoading, error, refetch } = useQuery({
         queryKey: ["documents"],
         queryFn: listDocumentsRequest,
         refetchInterval: 5000,
@@ -112,6 +113,14 @@ export function DocumentList() {
                     <div>
                         <h3 className="font-bold text-foreground">Failed to Load Documents</h3>
                         <p className="text-sm text-muted-foreground mt-1">{(error as any).message || "Database connection error."}</p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4 border-destructive/30 hover:bg-destructive/10 text-foreground"
+                            onClick={() => refetch()}
+                        >
+                            Retry Connection
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
