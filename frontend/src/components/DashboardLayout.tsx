@@ -18,18 +18,22 @@ import {
     Users
 } from "lucide-react";
 
+interface NavigationItem {
+    name: string;
+    href: string;
+    icon: any;
+    external?: boolean;
+}
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { user, logout } = useAuth();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    const observabilityUrl = process.env.NEXT_PUBLIC_OBSERVABILITY_URL || "http://localhost:3100";
-
-    const baseNavigation = [
+    const baseNavigation: NavigationItem[] = [
         { name: "Chat Console", href: "/dashboard/chat", icon: MessageSquare },
         { name: "Documents Ingestion", href: "/dashboard/documents", icon: FileText },
         { name: "Retrieval Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-        { name: "System Observability", href: observabilityUrl, icon: Activity, external: true },
     ];
 
     const navigation = user?.role === "admin"

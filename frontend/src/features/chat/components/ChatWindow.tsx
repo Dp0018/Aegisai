@@ -139,7 +139,7 @@ export function ChatWindow({ threadId }: ChatWindowProps) {
     return (
         <div className="flex h-full flex-col bg-transparent w-full overflow-hidden">
             {/* Scrollable Messages Panel */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[45vh]">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
                 {isLoading ? (
                     <div className="flex h-full items-center justify-center">
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -204,45 +204,47 @@ export function ChatWindow({ threadId }: ChatWindowProps) {
 
             {/* Human-in-the-Loop (HITL) Approval card */}
             {requiresApproval && (
-                <div className="border-t border-amber-500/30 bg-amber-500/5 p-4 space-y-4 backdrop-blur-md animate-fade-in">
+                <div className="shrink-0 border-t border-amber-500/30 bg-amber-500/5 p-4 space-y-3 backdrop-blur-md animate-fade-in max-h-[50%] overflow-y-auto shadow-xl z-10">
                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <AlertTriangle className="h-4.5 w-4.5 shrink-0" />
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
                         <span className="text-xs font-extrabold uppercase tracking-wider">
                             Operator Action Required (Human-in-the-Loop)
                         </span>
                     </div>
 
                     {pendingDraft && (
-                        <div className="rounded-xl border border-border/80 bg-card/60 p-4 text-xs text-foreground max-h-[160px] overflow-y-auto font-sans leading-relaxed">
+                        <div className="rounded-xl border border-border/80 bg-card/75 p-3 text-xs text-foreground max-h-[120px] overflow-y-auto font-sans leading-relaxed">
                             <strong className="block text-[10px] uppercase tracking-wide text-primary mb-1">Proposed Draft Response</strong>
                             <p className="whitespace-pre-wrap">{pendingDraft}</p>
                         </div>
                     )}
 
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                         <textarea
                             placeholder="Add revision comments here if requesting a redraft..."
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
                             disabled={approveMutation.isPending}
-                            className="w-full min-h-[70px] rounded-xl border border-border bg-background p-3 text-xs text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="w-full min-h-[60px] max-h-[100px] rounded-xl border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         />
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center justify-between gap-3 pt-1">
                             <Button
+                                type="button"
                                 onClick={() => approveMutation.mutate(false)}
                                 disabled={approveMutation.isPending || !feedback.trim()}
                                 variant="outline"
                                 className="flex-1 h-11 border-amber-500/40 text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 dark:text-amber-400 font-bold"
                             >
-                                <XCircle className="h-4 w-4 mr-2" />
+                                <XCircle className="h-4 w-4 mr-2 shrink-0" />
                                 Request Redraft
                             </Button>
                             <Button
+                                type="button"
                                 onClick={() => approveMutation.mutate(true)}
                                 disabled={approveMutation.isPending}
                                 className="flex-1 h-11 bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-500/10 font-bold"
                             >
-                                <CheckCircle className="h-4 w-4 mr-2" />
+                                <CheckCircle className="h-4 w-4 mr-2 shrink-0" />
                                 Approve & Release
                             </Button>
                         </div>
